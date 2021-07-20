@@ -10,6 +10,10 @@ namespace EBSD_Analyse
 
         public EBSD_Point[,] Ebsd_points;
 
+        public double maxPh1;
+        public double maxPh2;
+        public double maxPh3;
+
         public Analyzer() { }
         public Analyzer(EBSD_Point[,] ebsd_Points)
         {
@@ -28,9 +32,9 @@ namespace EBSD_Analyse
                 for (int x = 0; x < width; x++)
                 {
                     EBSD_Point point = Ebsd_points[x, y];
-                    colors[x, y] = new Color(Math.Clamp((int)(255 * point.Ph1 / 360d), 0, 255),
-                                             Math.Clamp((int)(255 * point.Ph2 / 360d), 0, 255),
-                                             Math.Clamp((int)(255 * point.Ph3 / 360d), 0, 255));
+                    colors[x, y] = new Color((int)(255 * point.Ph1 / maxPh1),
+                                             (int)(255 * point.Ph2 / maxPh2),
+                                             (int)(255 * point.Ph3 / maxPh3));
                 }
             }
             return colors;

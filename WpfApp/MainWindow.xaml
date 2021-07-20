@@ -5,30 +5,21 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="600" Width="800">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="300"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="600" />
-            <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-
-        <StackPanel x:Name="DropPanel" AllowDrop="True" Drop="DropPanel_Drop" Margin="10,10,10,30" Grid.Row="2" Grid.Column="2" Background="LightGray" >
+        <StackPanel x:Name="DropPanel" AllowDrop="True" Drop="DropPanel_Drop" VerticalAlignment="Top" HorizontalAlignment="Right" Height="100" Width="150" Margin="0,10,10,0" Background="LightGray" >
+            <Button x:Name="OpenFileButton" Content="Открыть" Click="OpenFileButton_Click"/>
             <Label Content="Drop EBSD data here" HorizontalAlignment="Center"/>
         </StackPanel>
 
-        <Image x:Name="EBSD_Image" HorizontalAlignment="Right" Height="393" Margin="0,10,10,0" VerticalAlignment="Top" Width="393" Grid.RowSpan="2"/>
+        <StackPanel Background="LightGray" Height="400" Width="400" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0">
+            <ScrollViewer Name="scroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible"  CanContentScroll="True" Height="400" Width="400">
+                <Image x:Name="EBSD_Image"/>
+            </ScrollViewer>
+        </StackPanel>
 
-        <Button x:Name="OpenFileButton" Content="Открыть" Grid.Column="2" Grid.Row="2" HorizontalAlignment="Stretch" Margin="10,0,10,10" VerticalAlignment="Bottom" Click="OpenFileButton_Click"/>
-        <Button x:Name="UpdateEbsdImageButton" Content="Обновить Картинку :3" Grid.Row="1" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Click="UpdateEbsdImageButton_Click"/>
-
-        <Label x:Name="OpenedFileLabel" Content="" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Top"/>
-
-
+        <ProgressBar x:Name="ProgressBar" Minimum="0" Maximum="100" HorizontalAlignment="Stretch" Height="10" VerticalAlignment="Bottom" Visibility="Hidden"/>
 
     </Grid>
+
 </Window>
