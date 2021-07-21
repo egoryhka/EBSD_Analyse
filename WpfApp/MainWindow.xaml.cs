@@ -33,14 +33,13 @@ namespace WpfApp
 
         public MainWindow()
         {
-
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-
             InitializeComponent();
-
             analyzer = new Analyzer();
         }
 
+        // Open
+        #region File_Opening
         private void DropPanel_Drop(object sender, DragEventArgs e)
         {
             string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
@@ -49,63 +48,18 @@ namespace WpfApp
 
         private void OpenFileButton_Click(object sender, RoutedEventArgs e)
         {
-            // Configure open file dialog box
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
-            dlg.FileName = "data.xlsx"; // Default file name
-            dlg.DefaultExt = ".xlsx"; // Default file extension
+            dlg.Multiselect = false;
+            dlg.FileName = "data.xlsx";
+            dlg.DefaultExt = ".xlsx";
             dlg.Filter = "Excel Worksheets|*.xlsx";
 
-            // Show open file dialog box
-            Nullable<bool> result = dlg.ShowDialog();
+            bool? result = dlg.ShowDialog();
 
-            // Process open file dialog box results
-            if (result == true)
-            {
-                // Open document
-                FilePath = dlg.FileName;
-            }
+            if (result == true) FilePath = dlg.FileName;
         }
 
-
-        private void OpenEbsdFile(string path)
-        {
-            if (string.IsNullOrEmpty(path)) return; // Bad Path...
-
-            ProgressBar.Value = 0;
-            ProgressBar.Visibility = Visibility.Visible;
-
-            BackgroundWorker worker = new BackgroundWorker();
-            worker.WorkerReportsProgress = true;
-            worker.DoWork += ReadEBSDExcel;
-            worker.ProgressChanged += worker_ProgressChanged;
-            worker.RunWorkerCompleted += bgw_RunWorkerCompleted;
-
-            worker.RunWorkerAsync(new ExcelPackage(new System.IO.FileInfo(path)));
-        }
-
-
-        void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            ProgressBar.Value = e.ProgressPercentage;
-        }
-
-        private void bgw_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            ProgressBar.Visibility = Visibility.Hidden;
-
-            if (e.Result == null) return;
-
-            (double maxPh1, double maxPh2, double maxPh3, EBSD_Point[,] points) result = ((double, double, double, EBSD_Point[,]))e.Result;
-
-            analyzer.maxPh1 = result.maxPh1;
-            analyzer.maxPh2 = result.maxPh2;
-            analyzer.maxPh3 = result.maxPh3;
-            analyzer.Ebsd_points = result.points;
-            UpdateImage();
-        }
-
-
-        void ReadEBSDExcel(object sender, DoWorkEventArgs e)
+        private void ReadEBSDExcel(object sender, DoWorkEventArgs e)
         {
             ExcelPackage package = (ExcelPackage)e.Argument;
 
@@ -121,11 +75,6 @@ namespace WpfApp
 
                 bool fileCorruption = false;
 
-                double maxPh1 = 0;
-                double maxPh2 = 0;
-                double maxPh3 = 0;
-
-
                 int k = 0;
                 for (int _y = 0; _y < ySize; _y++)
                 {
@@ -139,11 +88,13 @@ namespace WpfApp
                         var ph3 = worksheet.Cells[k + 2, 7].Value;
 
                         var mad = worksheet.Cells[k + 2, 8].Value;
+                        var bc = worksheet.Cells[k + 2, 10].Value;
+
 
                         if (x == null || y == null || ph1 == null || ph2 == null || ph3 == null || mad == null)
                         {
                             fileCorruption = true;
-                            ebsd_Points[_x, _y] = new EBSD_Point(0, 0, 0, 0, 0, 0);
+                            ebsd_Points[_x, _y] = new EBSD_Point(0, 0, 0, 0, 0, 0, 0);
                         }
                         else
                         {
@@ -155,28 +106,72 @@ namespace WpfApp
                             double Ph3 = (double)ph3;
 
                             double Mad = (double)mad;
+                            int Bc = Convert.ToInt32(bc);
 
-                            maxPh1 = Ph1 > maxPh1 ? Ph1 : maxPh1;
-                            maxPh2 = Ph2 > maxPh2 ? Ph2 : maxPh2;
-                            maxPh3 = Ph3 > maxPh3 ? Ph3 : maxPh3;
-
-                            ebsd_Points[_x, _y] = new EBSD_Point(X, Y, Ph1, Ph2, Ph3, Mad);
+                            ebsd_Points[_x, _y] = new EBSD_Point(X, Y, Ph1, Ph2, Ph3, Mad, Bc);
                         }
 
                         k++;
                     }
-                        (sender as BackgroundWorker).ReportProgress(101 * k / rowCount);
+                        (sender as BackgroundWorker).ReportProgress(101 * k / rowCount); // Progress Change
                 }
-                e.Result = (maxPh1, maxPh2, maxPh3, ebsd_Points);
+                e.Result = ebsd_Points;
 
                 if (fileCorruption) MessageBox.Show("Файл повреждён!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-            catch { MessageBox.Show("Ошибка чтения файла!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error); }
+            catch (Exception ex) { MessageBox.Show($"Ошибка чтения файла! \n {ex.ToString()}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error); }
             finally
             {
                 package.Dispose();
             }
         }
+        #endregion File_Opening
+
+        // Processing
+        #region Processing
+        private void OpenEbsdFile(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return; // Bad Path...
+
+            BackgroundWorker worker = new BackgroundWorker();
+            worker.WorkerReportsProgress = true;
+            worker.DoWork += ReadEBSDExcel;
+            worker.ProgressChanged += OnWorkProgressChanged;
+            worker.RunWorkerCompleted += OnWorkComplete;
+
+            worker.RunWorkerAsync(new ExcelPackage(new System.IO.FileInfo(path)));
+        }
+        #endregion Processing
+
+        // Processing_Events
+        #region Processing_Events
+        private void OnWorkProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            ProgressBar.Value = e.ProgressPercentage;
+        }
+
+        private void ProgressBar_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (e.NewValue >= 100 || e.OldValue >= 100)
+            {
+                ProgressBar.Visibility = Visibility.Hidden;
+                ProgressBar.Value = 0;
+            }
+            else ProgressBar.Visibility = Visibility.Visible;
+        }
+
+        private void OnWorkComplete(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Result != null)
+            {
+                analyzer.Ebsd_points = (EBSD_Point[,])e.Result;
+                UpdateImage();
+            }
+        }
+        #endregion Processing_Events
+
+        //
+
 
 
 
@@ -187,7 +182,7 @@ namespace WpfApp
             int width = analyzer.Ebsd_points.GetLength(0);
             int height = analyzer.Ebsd_points.GetLength(1);
 
-            var colors = analyzer.GetColors();
+            var colors = analyzer.GetColorMap(MapVariants.Euler);
 
             Bitmap bmp = new Bitmap(width, height);
 
@@ -218,5 +213,9 @@ namespace WpfApp
                 BitmapSizeOptions.FromEmptyOptions());
         }
 
+        private void ComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+
+        }
     }
 }

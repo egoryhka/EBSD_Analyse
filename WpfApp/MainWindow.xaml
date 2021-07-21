@@ -18,7 +18,11 @@
             </ScrollViewer>
         </StackPanel>
 
-        <ProgressBar x:Name="ProgressBar" Minimum="0" Maximum="100" HorizontalAlignment="Stretch" Height="10" VerticalAlignment="Bottom" Visibility="Hidden"/>
+        <Label Content="Вид изображения" HorizontalAlignment="Left" VerticalAlignment="Top" Width="140" Margin="10,415,0,0"/>
+        <ComboBox HorizontalAlignment="Right" Width="255" Height="26" SelectionChanged="ComboBox_SelectionChanged" Margin="0,415,390,143"/>
+
+
+        <ProgressBar x:Name="ProgressBar" ValueChanged="ProgressBar_ValueChanged" Minimum="0" Maximum="100" HorizontalAlignment="Stretch" Height="10" VerticalAlignment="Bottom" Visibility="Hidden"/>
 
     </Grid>
 
