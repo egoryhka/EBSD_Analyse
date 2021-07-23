@@ -9,6 +9,7 @@ using System.Drawing;
 using Color = System.Drawing.Color;
 using System.ComponentModel;
 
+
 namespace WpfApp
 {
     /// <summary>
@@ -16,6 +17,7 @@ namespace WpfApp
     /// </summary>
     public partial class MainWindow : Window
     {
+        
         public string FilePath
         {
             get { return _filePath; }
@@ -31,11 +33,23 @@ namespace WpfApp
 
         private Analyzer analyzer;
 
-        public MainWindow()
+        private void Initialize()
         {
             ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-            InitializeComponent();
             analyzer = new Analyzer();
+        }
+
+        public MainWindow()
+        {
+            Initialize();
+            InitializeComponent();
+
+            Analyzer.Work()[50].ToString();
+
+
+
+            MapVariantChoose.ItemsSource = Enum.GetValues(typeof(MapVariants)).Cast<MapVariants>();
+            MapVariantChoose.SelectedIndex = 0;
         }
 
         // Open
@@ -141,6 +155,28 @@ namespace WpfApp
 
             worker.RunWorkerAsync(new ExcelPackage(new System.IO.FileInfo(path)));
         }
+
+        private void UpdateImage()
+        {
+            if (analyzer.Ebsd_points == null) return; // No data
+
+            int width = analyzer.Ebsd_points.GetLength(0);
+            int height = analyzer.Ebsd_points.GetLength(1);
+
+            var colors = analyzer.GetColorMap((MapVariants)MapVariantChoose.SelectedItem);
+            Bitmap bmp = new Bitmap(width, height);
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    var color = Color.FromArgb(colors[x, y].R, colors[x, y].G, colors[x, y].B);
+                    bmp.SetPixel(x, y, color);
+                }
+            }
+            EBSD_Image.Source = CreateBitmapSourceFromBitmap(bmp);
+            bmp.Save("Ebsd_Image");
+        }
         #endregion Processing
 
         // Processing_Events
@@ -170,37 +206,17 @@ namespace WpfApp
         }
         #endregion Processing_Events
 
-        //
-
-
-
-
-        private void UpdateImage()
+        // Events
+        #region Events
+        private void MapVariantChoose_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            if (analyzer.Ebsd_points == null) return; // No data
-
-            int width = analyzer.Ebsd_points.GetLength(0);
-            int height = analyzer.Ebsd_points.GetLength(1);
-
-            var colors = analyzer.GetColorMap(MapVariants.Euler);
-
-            Bitmap bmp = new Bitmap(width, height);
-
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    var color = Color.FromArgb(colors[x, y].R, colors[x, y].G, colors[x, y].B);
-                    bmp.SetPixel(x, y, color);
-
-                }
-            }
-
-            EBSD_Image.Source = CreateBitmapSourceFromBitmap(bmp);
-
-            bmp.Save("Ebsd_Image");
+            UpdateImage();
         }
 
+        #endregion Events
+
+        // Helpers
+        #region Helpers
         public static BitmapSource CreateBitmapSourceFromBitmap(Bitmap bitmap)
         {
             if (bitmap == null)
@@ -212,10 +228,18 @@ namespace WpfApp
                 Int32Rect.Empty,
                 BitmapSizeOptions.FromEmptyOptions());
         }
+        #endregion Helpers
 
-        private void ComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
 
-        }
+        // Shaders
+        #region Shaders
+
+        
+        #endregion Shaders
+
+
+
+
+
     }
 }
