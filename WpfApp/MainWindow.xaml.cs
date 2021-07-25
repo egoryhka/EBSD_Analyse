@@ -17,7 +17,7 @@ namespace WpfApp
     /// </summary>
     public partial class MainWindow : Window
     {
-        
+
         public string FilePath
         {
             get { return _filePath; }
@@ -44,9 +44,7 @@ namespace WpfApp
             Initialize();
             InitializeComponent();
 
-            Analyzer.Work()[50].ToString();
-
-
+            var abc = Analyzer.Work();
 
             MapVariantChoose.ItemsSource = Enum.GetValues(typeof(MapVariants)).Cast<MapVariants>();
             MapVariantChoose.SelectedIndex = 0;
@@ -170,8 +168,8 @@ namespace WpfApp
             {
                 for (int x = 0; x < width; x++)
                 {
-                    var color = Color.FromArgb(colors[x, y].R, colors[x, y].G, colors[x, y].B);
-                    bmp.SetPixel(x, y, color);
+                    //var color = Color.FromArgb(colors[x, y].R, colors[x, y].G, colors[x, y].B);
+                    //bmp.SetPixel(x, y, color);
                 }
             }
             EBSD_Image.Source = CreateBitmapSourceFromBitmap(bmp);
@@ -234,7 +232,7 @@ namespace WpfApp
         // Shaders
         #region Shaders
 
-        
+
         #endregion Shaders
 
 
