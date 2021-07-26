@@ -10,7 +10,7 @@ namespace EBSD_Analyse
     public class Analyzer
     {
 
-        public static Color[,] Work()
+        public (int r, int g, int b)[,] GetColorMap(MapVariants mapVariant)
         {
             //Установка параметров, инициализирующих видеокарты при работе. В Platforms[1] должен стоять индекс
             //указывающий на используемую платформу
@@ -19,7 +19,7 @@ namespace EBSD_Analyse
 
             //Текст програмы, исполняющейся на устройстве (GPU или CPU). Именно эта программа будет выполнять паралельные
             //вычисления и будет складывать вектора. Программа написанна на языке, основанном на C99 специально под OpenCL.
-            string shaderProgram = @"
+            string euler2col = @"
 
                             __kernel void Euler2Color(__read_only image2d_t in, __write_only image2d_t out)
                             {
@@ -29,8 +29,28 @@ namespace EBSD_Analyse
 
                                 int2 coord = (int2)(get_global_id(0), get_global_id(1)); 
 
+                                float4 eul = read_imagef (in, smp, coord);
 
-                                int4 col = convert_int4(read_imagef (in, smp, coord));
+                                int4 col = convert_int4((float4)(255.0f*eul.x/360.0f, 255.0f*eul.y/90.0f, 255.0f*eul.z/90.0f, eul.w));
+
+                                write_imagei (out, coord, col);
+                            }
+
+                            ";
+
+            string bc2col = @"
+
+                            __kernel void Euler2Color(__read_only image2d_t in, __write_only image2d_t out)
+                            {
+                                const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
+                                                      CLK_ADDRESS_CLAMP | //Clamp to zeros
+                                                      CLK_FILTER_NEAREST; //Don't interpolate
+
+                                int2 coord = (int2)(get_global_id(0), get_global_id(1)); 
+
+                                float4 eul = read_imagef (in, smp, coord);
+
+                                int4 col = convert_int4((float4)(255.0f*eul.x/90.0f, 255.0f*eul.y/90.0f, 255.0f*eul.z/90.0f, eul.w));
 
                                 write_imagei (out, coord, col);
                             }
@@ -45,7 +65,13 @@ namespace EBSD_Analyse
             ComputeProgram program = null;
             try
             {
-                program = new ComputeProgram(Context, shaderProgram);
+               
+                switch (mapVariant)
+                {
+                    case MapVariants.BC: program = new ComputeProgram(Context, bc2col); break;
+                    case MapVariants.Euler: program = new ComputeProgram(Context, euler2col); break;
+                }
+                
                 program.Build(Devices, "", null, IntPtr.Zero);
             }
             catch
@@ -60,16 +86,18 @@ namespace EBSD_Analyse
             //Инициализация массивов
             ComputeImage2D pointsImg;
             ComputeImage2D colorsImg;
+            Euler[] eulers = Ebsd_points.Cast<EBSD_Point>().Select(x => x.Euler).ToArray();
 
-            float[] points = new float[400]; // input
-            Color[,] colors = new Color[10,10]; // output
+            float[] points = new float[4 * eulers.Length]; // input
+            (int r, int g, int b)[,] colors = new (int r, int g, int b)[width, height]; // output
 
-            for (int i = 0; i < points.Length - 2; i += 3)
+            int k = 0;
+            for (int i = 0; i < points.Length - 3; i += 4)
             {
-                points[i] = 100f;
-                points[i + 1] = 120f;
-                points[i + 2] = 150f;
-
+                points[i] = eulers[k].X;
+                points[i + 1] = eulers[k].Y;
+                points[i + 2] = eulers[k].Z;
+                k++;
             }
 
             unsafe
@@ -79,29 +107,31 @@ namespace EBSD_Analyse
                     ComputeImageFormat inputFormat = new ComputeImageFormat(ComputeImageChannelOrder.Rgba, ComputeImageChannelType.Float);
                     ComputeImageFormat outputFormat = new ComputeImageFormat(ComputeImageChannelOrder.Rgba, ComputeImageChannelType.SignedInt32);
 
-                    pointsImg = new ComputeImage2D(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, inputFormat, 10, 10, 10 * 4 * sizeof(float), (IntPtr)imgPtr);
+                    pointsImg = new ComputeImage2D(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, inputFormat, width, height, width * 4 * sizeof(float), (IntPtr)imgPtr);
 
-                    colorsImg = new ComputeImage2D(Context, ComputeMemoryFlags.ReadWrite, outputFormat, 10, 10, 0, IntPtr.Zero);
+                    colorsImg = new ComputeImage2D(Context, ComputeMemoryFlags.ReadWrite, outputFormat, width, height, 0, IntPtr.Zero);
                 }
 
                 kernel.SetMemoryArgument(0, pointsImg);
                 kernel.SetMemoryArgument(1, colorsImg);
 
-                Queue.Execute(kernel, null, new long[] { 10, 10 }, null, null);
+                Queue.Execute(kernel, null, new long[] { width, height }, null, null);
 
 
-                fixed (Color* imgPtr = colors)
+                fixed ((int r, int g, int b)* imgPtr = colors)
                 {
                     Queue.ReadFromImage(colorsImg, (IntPtr)imgPtr, true, null);
                 }
             }
-      
+
             return colors;
         }
-        
+
         //////////////////////////////////////////////////////////
 
         public EBSD_Point[,] Ebsd_points;
+        public int width => Ebsd_points.GetLength(0);
+        public int height => Ebsd_points.GetLength(1);
 
         public Analyzer() { }
         public Analyzer(EBSD_Point[,] ebsd_Points)
@@ -109,15 +139,6 @@ namespace EBSD_Analyse
             Ebsd_points = ebsd_Points;
         }
 
-        public Color[,] GetColorMap(MapVariants mapVariant)
-        {
-            switch (mapVariant)
-            {
-                case MapVariants.BC: return GetBC_Map();
-                case MapVariants.Euler: return GetEuler_Map();
-                default: return null;
-            }
-        }
 
         private Color[,] GetBC_Map()
         {
@@ -171,9 +192,9 @@ namespace EBSD_Analyse
         public Euler Euler;
         public int BC;
 
-        public EBSD_Point(double x, double y, double ph1, double ph2, double ph3, double mad, int bc)
+        public EBSD_Point(double x, double y, float ph1, float ph2, float ph3, double mad, int bc)
         {
-            X = x; Y = y; Euler.X = ph1; Euler.Y = ph2; Euler.Z = ph3; MAD = mad; BC = bc;
+            X = x; Y = y; Euler = new Euler(ph1, ph2, ph3); MAD = mad; BC = bc;
         }
     }
 
@@ -189,8 +210,8 @@ namespace EBSD_Analyse
     }
     public struct Euler
     {
-        public double X, Y, Z;
-        public Euler(double x, double y, double z)
+        public float X, Y, Z;
+        public Euler(float x, float y, float z)
         {
             X = x; Y = y; Z = z;
         }

@@ -44,7 +44,6 @@ namespace WpfApp
             Initialize();
             InitializeComponent();
 
-            var abc = Analyzer.Work();
 
             MapVariantChoose.ItemsSource = Enum.GetValues(typeof(MapVariants)).Cast<MapVariants>();
             MapVariantChoose.SelectedIndex = 0;
@@ -113,9 +112,9 @@ namespace WpfApp
                             double X = (double)x;
                             double Y = (double)y;
 
-                            double Ph1 = (double)ph1;
-                            double Ph2 = (double)ph2;
-                            double Ph3 = (double)ph3;
+                            float Ph1 = (float)(double)ph1;
+                            float Ph2 = (float)(double)ph2;
+                            float Ph3 = (float)(double)ph3;
 
                             double Mad = (double)mad;
                             int Bc = Convert.ToInt32(bc);
@@ -158,18 +157,19 @@ namespace WpfApp
         {
             if (analyzer.Ebsd_points == null) return; // No data
 
-            int width = analyzer.Ebsd_points.GetLength(0);
-            int height = analyzer.Ebsd_points.GetLength(1);
+            int width = analyzer.width;
+            int height = analyzer.height;
 
-            var colors = analyzer.GetColorMap((MapVariants)MapVariantChoose.SelectedItem);
+            var colors = analyzer.GetColorMap((MapVariants)MapVariantChoose.SelectedItem); // gpu work 
             Bitmap bmp = new Bitmap(width, height);
 
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
-                    //var color = Color.FromArgb(colors[x, y].R, colors[x, y].G, colors[x, y].B);
-                    //bmp.SetPixel(x, y, color);
+                    var col = new EBSD_Analyse.Color(colors[x, y].r, colors[x, y].g, colors[x, y].b);
+                    var SysColor = Color.FromArgb(col.R, col.G, col.B);
+                    bmp.SetPixel(x, y, SysColor);
                 }
             }
             EBSD_Image.Source = CreateBitmapSourceFromBitmap(bmp);
