@@ -162,7 +162,7 @@ namespace WpfApp
 
             var colors = analyzer.GetColorMap((MapVariants)MapVariantChoose.SelectedItem); // gpu work 
             Bitmap bmp = new Bitmap(width, height);
-
+            
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
