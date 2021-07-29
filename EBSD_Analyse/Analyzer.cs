@@ -44,34 +44,47 @@ namespace EBSD_Analyse
             //Текст програмы, исполняющейся на GPU
             string prog = @"
 
-                            __kernel void Euler2Color(__write_only image2d_t out, __read_only image2d_t in)
+                            __kernel void Euler2Color(__global char* out, int width, int height,
+                            __read_only image2d_t in)
                             {
                                 const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
                                                       CLK_ADDRESS_CLAMP | //Clamp to zeros
                                                       CLK_FILTER_NEAREST; //Don't interpolate
 
-                                int2 coord = (int2)(get_global_id(0), get_global_id(1)); 
+                                int x = get_global_id(0);
+                                int y = get_global_id(1);
+
+                                int2 coord = (int2)(x, y); 
+                                int linearId = (int)((x + y * width) * 4);
 
                                 float4 eul = read_imagef (in, smp, coord);
 
                                 int4 col = convert_int4((float4)(255.0f*eul.x/360.0f, 255.0f*eul.y/90.0f, 255.0f*eul.z/90.0f, 0));
 
-                                write_imagei (out, coord, col);
+                                out[linearId+3] = 255;
+                                out[linearId+2] = col.x;
+                                out[linearId+1] = col.y;
+                                out[linearId] = col.z;
+
                             }
 
                         //------------------------------------------------------------
 
-                            __kernel void Bc2Color(__write_only image2d_t out, __global int* bc, int width)
+                            __kernel void Bc2Color(__global char* out, int width, int height,
+                            __global int* bc)
                             {
                                 int x = get_global_id(0);
                                 int y = get_global_id(1);
 
-                                int2 coord = (int2)(x, y); 
-                                int bcId = (int)(x + y * width);
+                                int linearId = (int)((y + x * height) * 4);
 
-                                int4 col = (int4)(bc[bcId], bc[bcId], bc[bcId], 0);
 
-                                write_imagei (out, coord, col);
+                                int4 col = (int4)(bc[linearId/4], bc[linearId/4], bc[linearId/4], 0);
+
+                                out[linearId+3] = 255;
+                                out[linearId+2] = col.x;
+                                out[linearId+1] = col.y;
+                                out[linearId] = col.z;
                             }
 
                         //------------------------------------------------------------
@@ -98,7 +111,7 @@ namespace EBSD_Analyse
                 case MapVariants.BC:
                     {
                         ComputeBuffer<int> bcBuffer = new ComputeBuffer<int>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.UseHostPointer, bcs);
-                        return new object[] { bcBuffer, width };
+                        return new object[] { bcBuffer };
                     } // bc preparation
                 case MapVariants.Euler:
                     {
@@ -127,19 +140,19 @@ namespace EBSD_Analyse
             }
         }
 
-        public (int r, int g, int b)[,] GetColorMap(MapVariants mapVariant)
+        public byte[] GetColorMap(MapVariants mapVariant)
         {
             ComputeKernel kernel = null;
 
             // Инициализация новой программы
             //try
-            {
+            //{
                 switch (mapVariant)
                 {
                     case MapVariants.BC: kernel = Program.CreateKernel("Bc2Color"); break;
                     case MapVariants.Euler: kernel = Program.CreateKernel("Euler2Color"); break;
                 }
-            }
+            //}
             //catch { }
 
             if (kernel == null) return null;
@@ -147,17 +160,16 @@ namespace EBSD_Analyse
             // Создание програмной очереди.
             ComputeCommandQueue Queue = new ComputeCommandQueue(Context, Cloo.ComputePlatform.Platforms[1].Devices[0], Cloo.ComputeCommandQueueFlags.None);
 
-            // Формат выхода
-            ComputeImageFormat outputFormat = new ComputeImageFormat(ComputeImageChannelOrder.Rgba, ComputeImageChannelType.SignedInt32);
-
             // Инициализация выходного буффера и массива
-            ComputeImage2D colorsImg = new ComputeImage2D(Context, ComputeMemoryFlags.ReadWrite, outputFormat, width, height, 0, IntPtr.Zero);
-            (int r, int g, int b)[,] colors = new (int r, int g, int b)[width, height]; // output
+            ComputeBuffer<byte> colorsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, width * height * 4);
 
             // Установка параметров для расчетов
-            kernel.SetMemoryArgument(0, colorsImg);
+            kernel.SetMemoryArgument(0, colorsBuffer);
+            kernel.SetValueArgument<int>(1, width);
+            kernel.SetValueArgument<int>(2, height);
 
-            int i = 1;
+
+            int i = 3;
             foreach (var obj in GetKernelArguments(mapVariant))
             {
                 if (obj as ComputeMemory != null)
@@ -172,13 +184,10 @@ namespace EBSD_Analyse
             // Запуск 
             Queue.Execute(kernel, null, new long[] { width, height }, null, null);
 
-            unsafe // Считывание результата
-            {
-                fixed ((int r, int g, int b)* imgPtr = colors)
-                {
-                    Queue.ReadFromImage(colorsImg, (IntPtr)imgPtr, true, null);
-                }
-            }
+            // Считывание результата
+            byte[] colors = new byte[width * height * 4]; // output
+
+            Queue.ReadFromBuffer(colorsBuffer, ref colors, true, null);
 
             return colors;
         }

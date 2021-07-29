@@ -161,17 +161,9 @@ namespace WpfApp
             int height = analyzer.height;
 
             var colors = analyzer.GetColorMap((MapVariants)MapVariantChoose.SelectedItem); // gpu work 
-            Bitmap bmp = new Bitmap(width, height);
-            
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    var col = new EBSD_Analyse.Color(colors[x, y].r, colors[x, y].g, colors[x, y].b);
-                    var SysColor = Color.FromArgb(col.R, col.G, col.B);
-                    bmp.SetPixel(x, y, SysColor);
-                }
-            }
+
+            Bitmap bmp = ByteArrayToBitmap(colors, width, height);
+
             EBSD_Image.Source = CreateBitmapSourceFromBitmap(bmp);
             bmp.Save("Ebsd_Image");
         }
@@ -215,6 +207,21 @@ namespace WpfApp
 
         // Helpers
         #region Helpers
+        public static Bitmap ByteArrayToBitmap(byte[] bytes, int width, int height)
+        {
+            if(bytes==null) return null;
+            Bitmap bmp = new Bitmap(width, height);
+            Rectangle rect = new Rectangle(0, 0, bmp.Width, bmp.Height);
+            System.Drawing.Imaging.BitmapData bmpData =
+                bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.WriteOnly,
+                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            IntPtr ptr = bmpData.Scan0;
+            System.Runtime.InteropServices.Marshal.Copy(bytes, 0, ptr, bytes.Length);
+            bmp.UnlockBits(bmpData);
+
+            return bmp;
+        }
+
         public static BitmapSource CreateBitmapSourceFromBitmap(Bitmap bitmap)
         {
             if (bitmap == null)
