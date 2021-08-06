@@ -38,7 +38,7 @@ namespace EBSD_Analyse
 
             //Установка параметров, инициализирующих видеокарты при работе. В Platforms[1] должен стоять индекс
             //указывающий на используемую платформу
-            ComputeContextPropertyList Properties = new ComputeContextPropertyList(ComputePlatform.Platforms[1]);
+            ComputeContextPropertyList Properties = new ComputeContextPropertyList(ComputePlatform.Platforms[0]);
             Context = new ComputeContext(ComputeDeviceTypes.All, Properties, null, IntPtr.Zero);
 
             //Текст програмы, исполняющейся на GPU
@@ -55,36 +55,43 @@ namespace EBSD_Analyse
                                 int y = get_global_id(1);
 
                                 int2 coord = (int2)(x, y); 
-                                int linearId = (int)((x + y * width) * 4);
-
                                 float4 eul = read_imagef (in, smp, coord);
 
                                 int4 col = convert_int4((float4)(255.0f*eul.x/360.0f, 255.0f*eul.y/90.0f, 255.0f*eul.z/90.0f, 0));
 
-                                out[linearId+3] = 255;
-                                out[linearId+2] = col.x;
-                                out[linearId+1] = col.y;
-                                out[linearId] = col.z;
+                                int linearId = (int)((y + x * height) * 4);
+
+                                out[linearId] = col.x; // R
+                                out[linearId+1] = col.y; // G
+                                out[linearId+2] = col.z; // B
+                                out[linearId+3] = 255; // A
 
                             }
 
                         //------------------------------------------------------------
 
                             __kernel void Bc2Color(__global char* out, int width, int height,
-                            __global int* bc)
+                            __read_only image2d_t in)
                             {
+                                const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
+                                                      CLK_ADDRESS_CLAMP | //Clamp to zeros
+                                                      CLK_FILTER_NEAREST; //Don't interpolate
+
                                 int x = get_global_id(0);
                                 int y = get_global_id(1);
 
+                                int2 coord = (int2)(x, y); 
+                                int4 BC = read_imagei (in, smp, coord);
+
+                                int4 col = (int4)(BC.x,BC.x,BC.x,0);
+
                                 int linearId = (int)((y + x * height) * 4);
 
+                                out[linearId] = col.x; // R
+                                out[linearId+1] = col.y; // G
+                                out[linearId+2] = col.z; // B
+                                out[linearId+3] = 255; // A
 
-                                int4 col = (int4)(bc[linearId/4], bc[linearId/4], bc[linearId/4], 0);
-
-                                out[linearId+3] = 255;
-                                out[linearId+2] = col.x;
-                                out[linearId+1] = col.y;
-                                out[linearId] = col.z;
                             }
 
                         //------------------------------------------------------------
@@ -93,7 +100,7 @@ namespace EBSD_Analyse
 
             //Список устройств
             List<ComputeDevice> Devices = new List<ComputeDevice>();
-            Devices.Add(ComputePlatform.Platforms[1].Devices[0]);
+            Devices.Add(ComputePlatform.Platforms[0].Devices[0]);
 
             //Компиляция программы
             try
@@ -110,8 +117,17 @@ namespace EBSD_Analyse
             {
                 case MapVariants.BC:
                     {
-                        ComputeBuffer<int> bcBuffer = new ComputeBuffer<int>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.UseHostPointer, bcs);
-                        return new object[] { bcBuffer };
+                        ComputeImage2D bcImg;
+               
+                        unsafe
+                        {
+                            fixed (int* imgPtr = bcs)
+                            {
+                                ComputeImageFormat inputFormat = new ComputeImageFormat(ComputeImageChannelOrder.R, ComputeImageChannelType.SignedInt32);
+                                bcImg = new ComputeImage2D(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, inputFormat, width, height, width * 1 * sizeof(int), (IntPtr)imgPtr);
+                            }
+                        }
+                        return new object[] { bcImg };
                     } // bc preparation
                 case MapVariants.Euler:
                     {
@@ -158,7 +174,7 @@ namespace EBSD_Analyse
             if (kernel == null) return null;
 
             // Создание програмной очереди.
-            ComputeCommandQueue Queue = new ComputeCommandQueue(Context, Cloo.ComputePlatform.Platforms[1].Devices[0], Cloo.ComputeCommandQueueFlags.None);
+            ComputeCommandQueue Queue = new ComputeCommandQueue(Context, Cloo.ComputePlatform.Platforms[0].Devices[0], Cloo.ComputeCommandQueueFlags.None);
 
             // Инициализация выходного буффера и массива
             ComputeBuffer<byte> colorsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, width * height * 4);
