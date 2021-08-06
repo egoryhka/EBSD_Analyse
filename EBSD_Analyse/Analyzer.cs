@@ -15,8 +15,25 @@ namespace EBSD_Analyse
             set
             {
                 ebsd_points = value;
-                eulers = value.Cast<EBSD_Point>().Select(x => x.Euler).ToArray();
-                bcs = value.Cast<EBSD_Point>().Select(x => x.BC).ToArray();
+                eulers = new Euler[width * height];
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        eulers[x + y * width] = value[x, y].Euler;
+                    }
+                }
+                //eulers = value.Cast<EBSD_Point>().Select(x => x.Euler).ToArray();
+
+                bcs = new int[width * height];
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        bcs[x + y * width] = value[x, y].BC;
+                    }
+                }
+                //bcs = value.Cast<EBSD_Point>().Select(x => x.BC).ToArray();
             }
         }
         private EBSD_Point[,] ebsd_points;
@@ -59,7 +76,7 @@ namespace EBSD_Analyse
 
                                 int4 col = convert_int4((float4)(255.0f*eul.x/360.0f, 255.0f*eul.y/90.0f, 255.0f*eul.z/90.0f, 0));
 
-                                int linearId = (int)((y + x * height) * 4);
+                                int linearId = (int)((x + y * width) * 4);
 
                                 out[linearId] = col.x; // R
                                 out[linearId+1] = col.y; // G
@@ -85,7 +102,7 @@ namespace EBSD_Analyse
 
                                 int4 col = (int4)(BC.x,BC.x,BC.x,0);
 
-                                int linearId = (int)((y + x * height) * 4);
+                                int linearId = (int)((x + y * width) * 4);
 
                                 out[linearId] = col.x; // R
                                 out[linearId+1] = col.y; // G
