@@ -34,6 +34,7 @@ namespace EBSD_Analyse
                     }
                 }
                 //bcs = value.Cast<EBSD_Point>().Select(x => x.BC).ToArray();
+
             }
         }
         private EBSD_Point[,] ebsd_points;
@@ -113,6 +114,52 @@ namespace EBSD_Analyse
 
                         //------------------------------------------------------------
 
+                            __kernel void Extrapolate(__write_only image2d_t out, int width, int height,
+                            __read_only image2d_t in)
+                            {
+                                const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
+                                                      CLK_ADDRESS_CLAMP | //Clamp to zeros
+                                                      CLK_FILTER_NEAREST; //Don't interpolate
+
+                                int x = get_global_id(0);
+                                int y = get_global_id(1);
+                                int2 coord = (int2)(x, y); 
+                                float4 eul = read_imagef (in, smp, coord);
+                                if(fast_length(eul)>0) write_imagef(out, coord, eul);
+                                else
+                                {
+                                    float4 up = read_imagef (in, smp, coord + (int2)(0,1));
+                                    float4 left = read_imagef (in, smp, coord + (int2)(-1,0));
+                                    float4 right = read_imagef (in, smp, coord + (int2)(1,0));
+                                    float4 down = read_imagef (in, smp, coord + (int2)(0,-1));
+
+                                    float4 upLeft = read_imagef (in, smp, coord + (int2)(-1,1));
+                                    float4 upRight = read_imagef (in, smp, coord + (int2)(1,1));
+                                    float4 downLeft = read_imagef (in, smp, coord + (int2)(-1,-1));
+                                    float4 downRight = read_imagef (in, smp, coord + (int2)(1,-1));
+                                    
+                                    float4 sum = (float4)(0,0,0,0);
+                                    int k = 0;
+
+                                    if(fast_length(up)>0) {sum += up; k++;}
+                                    if(fast_length(left)>0) {sum += left; k++;}
+                                    if(fast_length(right)>0) {sum += right; k++;}
+                                    if(fast_length(down)>0) {sum += down; k++;}
+                                    if(fast_length(upLeft)>0) {sum += upLeft; k++;}
+                                    if(fast_length(upRight)>0) {sum += upRight; k++;}
+                                    if(fast_length(downLeft)>0) {sum += downLeft; k++;}
+                                    if(fast_length(downRight)>0) {sum += downRight; k++;}
+                                    
+                                    if(k>=4)
+                                    {
+                                        write_imagef(out, coord, sum/k);
+                                    }
+
+                                }
+                                
+                            }
+                  
+                        //------------------------------------------------------------
                             ";
 
             //Список устройств
@@ -135,7 +182,7 @@ namespace EBSD_Analyse
                 case MapVariants.BC:
                     {
                         ComputeImage2D bcImg;
-               
+
                         unsafe
                         {
                             fixed (int* imgPtr = bcs)
@@ -173,20 +220,81 @@ namespace EBSD_Analyse
             }
         }
 
+        public void Extrapolate(int iterations)
+        {
+            Euler[] euls = eulers;
+            for (int i = 0; i < iterations; i++)
+            {
+                euls = Extrapolate(euls);
+            }
+            eulers = euls;
+        }
+
+        private Euler[] Extrapolate(Euler[] _eulers)
+        {
+            ComputeKernel kernel = null;
+
+            // Инициализация новой программы
+            try
+            {
+                kernel = Program.CreateKernel("Extrapolate");
+            }
+            catch { }
+
+            if (kernel == null) return null;
+
+            // Создание програмной очереди.
+            ComputeCommandQueue Queue = new ComputeCommandQueue(Context, Cloo.ComputePlatform.Platforms[0].Devices[0], Cloo.ComputeCommandQueueFlags.None);
+
+            // Инициализация буфферов
+            ComputeImage2D inputBuffer;
+            ComputeImage2D outputBuffer;
+            ComputeImageFormat Format = new ComputeImageFormat(ComputeImageChannelOrder.Rgba, ComputeImageChannelType.Float);
+            unsafe
+            {
+                fixed (Euler* imgPtr = _eulers)
+                {
+                    inputBuffer = new ComputeImage2D(Context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, Format, width, height, width * 4 * sizeof(float), (IntPtr)imgPtr);
+                }
+                fixed (Euler* imgPtr = new Euler[_eulers.Length])
+                {
+                    outputBuffer = new ComputeImage2D(Context, ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.CopyHostPointer, Format, width, height, width * 4 * sizeof(float), (IntPtr)imgPtr);
+                }
+
+            }
+
+
+            // Установка параметров для расчетов
+            kernel.SetMemoryArgument(0, outputBuffer);
+            kernel.SetValueArgument<int>(1, width);
+            kernel.SetValueArgument<int>(2, height);
+            kernel.SetMemoryArgument(3, inputBuffer);
+
+            // Запуск 
+            Queue.Execute(kernel, null, new long[] { width, height }, null, null);
+
+            // Считывание результата
+            Euler[] res = new Euler[_eulers.Length];
+            GCHandle handle = GCHandle.Alloc(res, GCHandleType.Pinned);
+            Queue.ReadFromImage(outputBuffer, handle.AddrOfPinnedObject(), true, new SysIntX2(0, 0), new SysIntX2(width, height), null);
+
+            return res;
+        }
+
         public byte[] GetColorMap(MapVariants mapVariant)
         {
             ComputeKernel kernel = null;
 
             // Инициализация новой программы
-            //try
-            //{
+            try
+            {
                 switch (mapVariant)
                 {
                     case MapVariants.BC: kernel = Program.CreateKernel("Bc2Color"); break;
                     case MapVariants.Euler: kernel = Program.CreateKernel("Euler2Color"); break;
                 }
-            //}
-            //catch { }
+            }
+            catch { }
 
             if (kernel == null) return null;
 
@@ -234,11 +342,11 @@ namespace EBSD_Analyse
 
     public struct EBSD_Point
     {
-        public double X, Y, MAD;
+        public float X, Y, MAD;
         public Euler Euler;
         public int BC;
 
-        public EBSD_Point(double x, double y, float ph1, float ph2, float ph3, double mad, int bc)
+        public EBSD_Point(float x, float y, float ph1, float ph2, float ph3, float mad, int bc)
         {
             X = x; Y = y; Euler = new Euler(ph1, ph2, ph3); MAD = mad; BC = bc;
         }

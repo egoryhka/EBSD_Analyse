@@ -109,14 +109,14 @@ namespace WpfApp
                         }
                         else
                         {
-                            double X = (double)x;
-                            double Y = (double)y;
+                            float X = (float)(double)x;
+                            float Y = (float)(double)y;
 
                             float Ph1 = (float)(double)ph1;
                             float Ph2 = (float)(double)ph2;
                             float Ph3 = (float)(double)ph3;
 
-                            double Mad = (double)mad;
+                            float Mad = (float)(double)mad;
                             int Bc = Convert.ToInt32(bc);
 
                             ebsd_Points[_x, _y] = new EBSD_Point(X, Y, Ph1, Ph2, Ph3, Mad, Bc);
@@ -209,7 +209,7 @@ namespace WpfApp
         #region Helpers
         public static Bitmap ByteArrayToBitmap(byte[] bytes, int width, int height)
         {
-            if(bytes==null) return null;
+            if (bytes == null) return null;
             Bitmap bmp = new Bitmap(width, height);
             Rectangle rect = new Rectangle(0, 0, bmp.Width, bmp.Height);
             System.Drawing.Imaging.BitmapData bmpData =
@@ -233,6 +233,11 @@ namespace WpfApp
                 Int32Rect.Empty,
                 BitmapSizeOptions.FromEmptyOptions());
         }
+
+
+
+
+
         #endregion Helpers
 
 
@@ -242,9 +247,12 @@ namespace WpfApp
 
         #endregion Shaders
 
-
-
-
-
+        private void ExtrapolateButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (analyzer.Ebsd_points == null || analyzer == null) { MessageBox.Show("Не с чем работать"); return; }
+            analyzer.Extrapolate((int)ExtrapolateSlider.Value);
+            
+            UpdateImage();
+        }
     }
 }
