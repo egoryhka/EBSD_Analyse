@@ -62,100 +62,125 @@ namespace EBSD_Analyse
             //Текст програмы, исполняющейся на GPU
             string prog = @"
 
-                            __kernel void Euler2Color(__global char* out, int width, int height,
-                            __read_only image2d_t in)
-                            {
-                                const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
-                                                      CLK_ADDRESS_CLAMP | //Clamp to zeros
-                                                      CLK_FILTER_NEAREST; //Don't interpolate
+                 __kernel void Euler2Color(__global char* out, int width, int height,
+                 __read_only image2d_t in)
+                 {
+                     const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
+                                           CLK_ADDRESS_CLAMP | //Clamp to zeros
+                                           CLK_FILTER_NEAREST; //Don't interpolate
 
-                                int x = get_global_id(0);
-                                int y = get_global_id(1);
+                     int x = get_global_id(0);
+                     int y = get_global_id(1);
 
-                                int2 coord = (int2)(x, y); 
-                                float4 eul = read_imagef (in, smp, coord);
+                     int2 coord = (int2)(x, y); 
+                     float4 eul = read_imagef (in, smp, coord);
 
-                                int4 col = convert_int4((float4)(255.0f*eul.x/360.0f, 255.0f*eul.y/90.0f, 255.0f*eul.z/90.0f, 0));
+                     int4 col = convert_int4((float4)(255.0f*eul.x/360.0f, 255.0f*eul.y/90.0f, 255.0f*eul.z/90.0f, 0));
 
-                                int linearId = (int)((x + y * width) * 4);
+                     int linearId = (int)((x + y * width) * 4);
 
-                                out[linearId] = col.x; // R
-                                out[linearId+1] = col.y; // G
-                                out[linearId+2] = col.z; // B
-                                out[linearId+3] = 255; // A
+                     out[linearId] = col.x; // R
+                     out[linearId+1] = col.y; // G
+                     out[linearId+2] = col.z; // B
+                     out[linearId+3] = 255; // A
 
-                            }
+                 }
 
-                        //------------------------------------------------------------
+             //------------------------------------------------------------
 
-                            __kernel void Bc2Color(__global char* out, int width, int height,
-                            __read_only image2d_t in)
-                            {
-                                const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
-                                                      CLK_ADDRESS_CLAMP | //Clamp to zeros
-                                                      CLK_FILTER_NEAREST; //Don't interpolate
+                 __kernel void Bc2Color(__global char* out, int width, int height,
+                 __read_only image2d_t in)
+                 {
+                     const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
+                                           CLK_ADDRESS_CLAMP | //Clamp to zeros
+                                           CLK_FILTER_NEAREST; //Don't interpolate
 
-                                int x = get_global_id(0);
-                                int y = get_global_id(1);
+                     int x = get_global_id(0);
+                     int y = get_global_id(1);
 
-                                int2 coord = (int2)(x, y); 
-                                int4 BC = read_imagei (in, smp, coord);
+                     int2 coord = (int2)(x, y); 
+                     int4 BC = read_imagei (in, smp, coord);
 
-                                int4 col = (int4)(BC.x,BC.x,BC.x,0);
+                     int4 col = (int4)(BC.x,BC.x,BC.x,0);
 
-                                int linearId = (int)((x + y * width) * 4);
+                     int linearId = (int)((x + y * width) * 4);
 
-                                out[linearId] = col.x; // R
-                                out[linearId+1] = col.y; // G
-                                out[linearId+2] = col.z; // B
-                                out[linearId+3] = 255; // A
+                     out[linearId] = col.x; // R
+                     out[linearId+1] = col.y; // G
+                     out[linearId+2] = col.z; // B
+                     out[linearId+3] = 255; // A
 
-                            }
+                 }
 
-                        //------------------------------------------------------------
+             //------------------------------------------------------------
  
-                            struct Euler
-                            {
-                                float x;
-                                float y;
-                                float z;
-                            }; typedef struct Euler euler;
+                 struct Euler
+                 {
+                     float x;
+                     float y;
+                     float z;
+                 }; typedef struct Euler euler;
 
-                            __kernel void Extrapolate(__global euler* out, int width, int height,
-                            __global euler* in)
-                            {
-                                int id = get_global_id(0);
+                 euler eul_sum(euler a, euler b){
+                 return (euler){a.x+b.x,a.y+b.y,a.z+b.z};
+                 }
 
-                                euler eul = in[id];
+                 __kernel void Extrapolate(__global euler* out, int width, int height,
+                 __global euler* in)
+                 {
+                     int id = get_global_id(0);
 
-                                if(eul.x > 0 && eul.y > 0 && eul.z > 0) 
-                                { 
-                                    out[id] = eul;
-                                }
-                                else
-                                {
-                                    int k = 0;
-                                    euler sum = { 0, 0, 0};
+                     euler eul = in[id];
 
-                                    int up = id-width;
-                                    int left = id-1;
-                                    int right = id+1;
-                                    int down = id+width;
+                     if(eul.x > 0 && eul.y > 0 && eul.z > 0) 
+                     { 
+                         out[id] = eul;
+                     }
+                     else
+                     {
+                        int k = 0;
+                        euler sum = { 0, 0, 0};
+                         
+                        bool can_up = id > width;
+                        bool can_left = (id % width) != 0;
+                        bool can_right = ((id+1) % width) != 0;
+                        bool can_down = id < (width * height - width);
 
-                                    int upLeft = id-width-1;
-                                    int upRight = id-width+1;
-                                    int downLeft = id+width-1;
-                                    int downRight = id+width+1;
-                                   
-                                    out[id] = (euler){ 0, 0, 90};
-                                                     //B  G  R
-                                    //out[id] = (euler){ 200, 0, 0};
-                                } 
-                                
-                                
-                            }
-                  
-                        //------------------------------------------------------------
+                        bool can_upLeft = can_up && can_left;
+                        bool can_upRifht = can_up && can_right;
+                        bool can_downLeft = can_down && can_left;
+                        bool can_downRight = can_down && can_right;
+
+                        int up = id-width;
+                        int left = id-1;
+                        int right = id+1;
+                        int down = id+width;
+
+                        int upLeft = id-width-1;
+                        int upRight = id-width+1;
+                        int downLeft = id+width-1;
+                        int downRight = id+width+1;
+                        
+                        if(can_up && (in[up].x > 0 || in[up].y > 0 || in[up].z >0)) {k++; sum = eul_sum(sum, in[up]); }    
+                        if(can_left && (in[left].x > 0 || in[left].y > 0 || in[left].z >0)) {k++; sum = eul_sum(sum, in[left]); }    
+                        if(can_right && (in[right].x > 0 || in[right].y > 0 || in[right].z >0)) {k++; sum = eul_sum(sum, in[right]); }    
+                        if(can_down && (in[down].x > 0 || in[down].y > 0 || in[down].z >0)) {k++; sum = eul_sum(sum, in[down]); }    
+
+                        if(can_upLeft && (in[upLeft].x > 0 || in[upLeft].y > 0 || in[upLeft].z >0)) {k++; sum = eul_sum(sum, in[upLeft]); }    
+                        if(can_upRifht && (in[upRight].x > 0 || in[upRight].y > 0 || in[upRight].z >0)) {k++; sum = eul_sum(sum, in[upRight]); }    
+                        if(can_downLeft && (in[downLeft].x > 0 || in[downLeft].y > 0 || in[downLeft].z >0)) {k++; sum = eul_sum(sum, in[downLeft]); }    
+                        if(can_downRight && (in[downRight].x > 0 || in[downRight].y > 0 || in[downRight].z >0)) {k++; sum = eul_sum(sum, in[downRight]); }    
+
+                        if(k >= 4){
+                            out[id] = (euler){ sum.x / k, sum.y / k, sum.z / k};
+                        }
+
+                     } 
+                     
+                     
+                 }
+        
+             //------------------------------------------------------------
                             ";
 
             //Список устройств
