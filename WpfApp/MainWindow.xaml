@@ -14,7 +14,7 @@
 
         <StackPanel Background="LightGray" Height="400" Width="400" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0">
             <ScrollViewer Name="scroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible"  CanContentScroll="True" Height="400" Width="400">
-                <Image x:Name="EBSD_Image"/>
+                <Image x:Name="EBSD_Image" MouseLeftButtonDown="EBSD_Image_MouseLeftButtonDown"/>
             </ScrollViewer>
         </StackPanel>
 

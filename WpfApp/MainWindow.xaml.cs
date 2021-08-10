@@ -203,6 +203,25 @@ namespace WpfApp
             UpdateImage();
         }
 
+        private void ExtrapolateButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (analyzer.Ebsd_points == null || analyzer == null) { MessageBox.Show("Не с чем работать"); return; }
+            analyzer.Extrapolate((int)ExtrapolateSlider.Value);
+
+            UpdateImage();
+        }
+
+        private void EBSD_Image_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            BitmapSource bitmapSource = EBSD_Image.Source as BitmapSource;
+            if (bitmapSource != null)
+            {
+                int x = (int)e.GetPosition(EBSD_Image).X;
+                int y = (int)e.GetPosition(EBSD_Image).Y;
+
+                MessageBox.Show("x:" + x + "///" + "y:" + y);
+            }
+        }
         #endregion Events
 
         // Helpers
@@ -247,12 +266,7 @@ namespace WpfApp
 
         #endregion Shaders
 
-        private void ExtrapolateButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (analyzer.Ebsd_points == null || analyzer == null) { MessageBox.Show("Не с чем работать"); return; }
-            analyzer.Extrapolate((int)ExtrapolateSlider.Value);
-            
-            UpdateImage();
-        }
+
+
     }
 }

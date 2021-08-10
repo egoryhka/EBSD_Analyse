@@ -125,9 +125,17 @@ namespace EBSD_Analyse
                                 int y = get_global_id(1);
                                 int2 coord = (int2)(x, y); 
                                 float4 eul = read_imagef (in, smp, coord);
-                                if(fast_length(eul)>0) write_imagef(out, coord, eul);
-                                else
-                                {
+
+                                float eulLength = fast_length(eul);
+                                if(eulLength > 0) 
+                                { 
+                                    write_imagef(out, coord, eul);
+                                }
+                                
+                                int k = 0;
+                                float4 sum = eul;
+
+                                if (eulLength <= 0) {
                                     float4 up = read_imagef (in, smp, coord + (int2)(0,1));
                                     float4 left = read_imagef (in, smp, coord + (int2)(-1,0));
                                     float4 right = read_imagef (in, smp, coord + (int2)(1,0));
@@ -137,25 +145,23 @@ namespace EBSD_Analyse
                                     float4 upRight = read_imagef (in, smp, coord + (int2)(1,1));
                                     float4 downLeft = read_imagef (in, smp, coord + (int2)(-1,-1));
                                     float4 downRight = read_imagef (in, smp, coord + (int2)(1,-1));
-                                    
-                                    float4 sum = (float4)(0,0,0,0);
-                                    int k = 0;
+                                                                        
 
-                                    if(fast_length(up)>0) {sum += up; k++;}
-                                    if(fast_length(left)>0) {sum += left; k++;}
-                                    if(fast_length(right)>0) {sum += right; k++;}
-                                    if(fast_length(down)>0) {sum += down; k++;}
-                                    if(fast_length(upLeft)>0) {sum += upLeft; k++;}
-                                    if(fast_length(upRight)>0) {sum += upRight; k++;}
-                                    if(fast_length(downLeft)>0) {sum += downLeft; k++;}
-                                    if(fast_length(downRight)>0) {sum += downRight; k++;}
+                                    //if(fast_length(up)>0) {sum += up; k++;}
+                                    //if(fast_length(left)>0) {sum += left; k++;}
+                                    //if(fast_length(right)>0) {sum += right; k++;}
+                                    //if(fast_length(down)>0) {sum += down; k++;}
+                                    //if(fast_length(upLeft)>0) {sum += upLeft; k++;}
+                                    //if(fast_length(upRight)>0) {sum += upRight; k++;}
+                                    //if(fast_length(downLeft)>0) {sum += downLeft; k++;}
+                                    //if(fast_length(downRight)>0) {sum += downRight; k++;}
                                     
-                                    if(k>=4)
-                                    {
-                                        write_imagef(out, coord, sum/k);
-                                    }
+                                } 
 
-                                }
+                                //if(k >= 4){
+                                     write_imagef(out, coord, sum);
+                                //}
+                                
                                 
                             }
                   
@@ -252,13 +258,13 @@ namespace EBSD_Analyse
             ComputeImageFormat Format = new ComputeImageFormat(ComputeImageChannelOrder.Rgba, ComputeImageChannelType.Float);
             unsafe
             {
-                fixed (Euler* imgPtr = _eulers)
+                fixed (Euler* inPtr = _eulers)
                 {
-                    inputBuffer = new ComputeImage2D(Context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, Format, width, height, width * 4 * sizeof(float), (IntPtr)imgPtr);
+                    inputBuffer = new ComputeImage2D(Context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, Format, width, height, width * 4 * sizeof(float), (IntPtr)inPtr);
                 }
-                fixed (Euler* imgPtr = new Euler[_eulers.Length])
+                fixed (Euler* outPtr = new Euler[_eulers.Length])
                 {
-                    outputBuffer = new ComputeImage2D(Context, ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.CopyHostPointer, Format, width, height, width * 4 * sizeof(float), (IntPtr)imgPtr);
+                    outputBuffer = new ComputeImage2D(Context, ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.CopyHostPointer, Format, width, height, width * 4 * sizeof(float), (IntPtr)outPtr);
                 }
 
             }
