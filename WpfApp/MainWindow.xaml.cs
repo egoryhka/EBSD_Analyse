@@ -211,6 +211,19 @@ namespace WpfApp
             UpdateImage();
         }
 
+        private void EBSD_Image_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            BitmapSource bitmapSource = EBSD_Image.Source as BitmapSource;
+            if (bitmapSource != null)
+            {
+                int x = (int)e.GetPosition(EBSD_Image).X;
+                int y = (int)e.GetPosition(EBSD_Image).Y;
+
+                xLable.Content = "X: " + x;
+                yLable.Content = "Y: " + y;
+            }
+        }
+
         private void EBSD_Image_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             BitmapSource bitmapSource = EBSD_Image.Source as BitmapSource;
@@ -219,9 +232,11 @@ namespace WpfApp
                 int x = (int)e.GetPosition(EBSD_Image).X;
                 int y = (int)e.GetPosition(EBSD_Image).Y;
 
-                MessageBox.Show("x:" + x + "///" + "y:" + y);
+                Euler pointOrientation = analyzer.Ebsd_points[x, y].Euler;
+                MessageBox.Show("ph1: " + pointOrientation.X.ToString() + "\n" + "ph2: " + pointOrientation.Y.ToString() + "\n" + "ph3: " + pointOrientation.Z.ToString());
             }
         }
+
         #endregion Events
 
         // Helpers
@@ -257,6 +272,8 @@ namespace WpfApp
 
 
 
+
+
         #endregion Helpers
 
 
@@ -265,7 +282,6 @@ namespace WpfApp
 
 
         #endregion Shaders
-
 
 
     }

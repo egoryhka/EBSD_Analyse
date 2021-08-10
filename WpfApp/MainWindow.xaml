@@ -14,7 +14,7 @@
 
         <StackPanel Background="LightGray" Height="400" Width="400" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0">
             <ScrollViewer Name="scroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible"  CanContentScroll="True" Height="400" Width="400">
-                <Image x:Name="EBSD_Image" MouseLeftButtonDown="EBSD_Image_MouseLeftButtonDown"/>
+                <Image x:Name="EBSD_Image" MouseMove="EBSD_Image_MouseMove" MouseLeftButtonDown="EBSD_Image_MouseLeftButtonDown"/>
             </ScrollViewer>
         </StackPanel>
 
@@ -24,9 +24,12 @@
 
         <ProgressBar x:Name="ProgressBar" ValueChanged="ProgressBar_ValueChanged" Minimum="0" Maximum="100" HorizontalAlignment="Stretch" Height="10" VerticalAlignment="Bottom" Visibility="Hidden"/>
         <Button Content="Экстраполяция" x:Name="ExtrapolateButton" HorizontalAlignment="Left" Margin="415,90,0,0" VerticalAlignment="Top" Width="212" Click="ExtrapolateButton_Click"/>
-        <Slider HorizontalAlignment="Left" x:Name="ExtrapolateSlider" Value="1" Minimum="0" Maximum="5" IsSnapToTickEnabled="True" Ticks="1,2,3,4,5" Margin="507,63,0,0" TickPlacement="TopLeft" VerticalAlignment="Top" Width="120" />
+        <Slider HorizontalAlignment="Left" x:Name="ExtrapolateSlider" Value="1" Minimum="0" Maximum="10" IsSnapToTickEnabled="True" TickFrequency="1" Margin="507,63,0,0" TickPlacement="TopLeft" VerticalAlignment="Top" Width="120" />
         <Label  Content="Итераций:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="67" Margin="410,63,0,0" Height="25"/>
         <Label  Content="{Binding ElementName=ExtrapolateSlider, Path=Value}" HorizontalAlignment="Left" VerticalAlignment="Top" Width="25" Margin="482,63,0,0" Height="25"/>
+       
+        <Label x:Name="xLable" Content="X:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="67" Margin="10,549,0,0" Height="25"/>
+        <Label x:Name="yLable" Content="Y:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="67" Margin="82,549,0,0" Height="25"/>
 
     </Grid>
 
