@@ -113,54 +113,44 @@ namespace EBSD_Analyse
                             }
 
                         //------------------------------------------------------------
-
-                            __kernel void Extrapolate(__write_only image2d_t out, int width, int height,
-                            __read_only image2d_t in)
+ 
+                            struct Euler
                             {
-                                const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
-                                                      CLK_ADDRESS_CLAMP | //Clamp to zeros
-                                                      CLK_FILTER_NEAREST; //Don't interpolate
+                                float x;
+                                float y;
+                                float z;
+                            }; typedef struct Euler euler;
 
-                                int x = get_global_id(0);
-                                int y = get_global_id(1);
-                                int2 coord = (int2)(x, y); 
-                                float4 eul = read_imagef (in, smp, coord);
+                            __kernel void Extrapolate(__global euler* out, int width, int height,
+                            __global euler* in)
+                            {
+                                int id = get_global_id(0);
 
-                                float eulLength = fast_length(eul);
-                                if(eulLength > 0) 
+                                euler eul = in[id];
+
+                                if(eul.x > 0 && eul.y > 0 && eul.z > 0) 
                                 { 
-                                    write_imagef(out, coord, eul);
+                                    out[id] = eul;
                                 }
-                                
-                                int k = 0;
-                                float4 sum = eul;
+                                else
+                                {
+                                    int k = 0;
+                                    euler sum = { 0, 0, 0};
 
-                                if (eulLength <= 0) {
-                                    float4 up = read_imagef (in, smp, coord + (int2)(0,1));
-                                    float4 left = read_imagef (in, smp, coord + (int2)(-1,0));
-                                    float4 right = read_imagef (in, smp, coord + (int2)(1,0));
-                                    float4 down = read_imagef (in, smp, coord + (int2)(0,-1));
+                                    int up = id-width;
+                                    int left = id-1;
+                                    int right = id+1;
+                                    int down = id+width;
 
-                                    float4 upLeft = read_imagef (in, smp, coord + (int2)(-1,1));
-                                    float4 upRight = read_imagef (in, smp, coord + (int2)(1,1));
-                                    float4 downLeft = read_imagef (in, smp, coord + (int2)(-1,-1));
-                                    float4 downRight = read_imagef (in, smp, coord + (int2)(1,-1));
-                                                                        
-
-                                    //if(fast_length(up)>0) {sum += up; k++;}
-                                    //if(fast_length(left)>0) {sum += left; k++;}
-                                    //if(fast_length(right)>0) {sum += right; k++;}
-                                    //if(fast_length(down)>0) {sum += down; k++;}
-                                    //if(fast_length(upLeft)>0) {sum += upLeft; k++;}
-                                    //if(fast_length(upRight)>0) {sum += upRight; k++;}
-                                    //if(fast_length(downLeft)>0) {sum += downLeft; k++;}
-                                    //if(fast_length(downRight)>0) {sum += downRight; k++;}
-                                    
+                                    int upLeft = id-width-1;
+                                    int upRight = id-width+1;
+                                    int downLeft = id+width-1;
+                                    int downRight = id+width+1;
+                                   
+                                    out[id] = (euler){ 0, 0, 90};
+                                                     //B  G  R
+                                    //out[id] = (euler){ 200, 0, 0};
                                 } 
-
-                                //if(k >= 4){
-                                     write_imagef(out, coord, sum);
-                                //}
                                 
                                 
                             }
@@ -253,22 +243,11 @@ namespace EBSD_Analyse
             ComputeCommandQueue Queue = new ComputeCommandQueue(Context, Cloo.ComputePlatform.Platforms[0].Devices[0], Cloo.ComputeCommandQueueFlags.None);
 
             // Инициализация буфферов
-            ComputeImage2D inputBuffer;
-            ComputeImage2D outputBuffer;
-            ComputeImageFormat Format = new ComputeImageFormat(ComputeImageChannelOrder.Rgba, ComputeImageChannelType.Float);
-            unsafe
-            {
-                fixed (Euler* inPtr = _eulers)
-                {
-                    inputBuffer = new ComputeImage2D(Context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, Format, width, height, width * 4 * sizeof(float), (IntPtr)inPtr);
-                }
-                fixed (Euler* outPtr = new Euler[_eulers.Length])
-                {
-                    outputBuffer = new ComputeImage2D(Context, ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.CopyHostPointer, Format, width, height, width * 4 * sizeof(float), (IntPtr)outPtr);
-                }
+            ComputeBuffer<Euler> inputBuffer;
+            ComputeBuffer<Euler> outputBuffer;
 
-            }
-
+            inputBuffer = new ComputeBuffer<Euler>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, _eulers);
+            outputBuffer = new ComputeBuffer<Euler>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, new Euler[_eulers.Length]);
 
             // Установка параметров для расчетов
             kernel.SetMemoryArgument(0, outputBuffer);
@@ -277,12 +256,11 @@ namespace EBSD_Analyse
             kernel.SetMemoryArgument(3, inputBuffer);
 
             // Запуск 
-            Queue.Execute(kernel, null, new long[] { width, height }, null, null);
+            Queue.Execute(kernel, null, new long[] { _eulers.Length }, null, null);
 
             // Считывание результата
             Euler[] res = new Euler[_eulers.Length];
-            GCHandle handle = GCHandle.Alloc(res, GCHandleType.Pinned);
-            Queue.ReadFromImage(outputBuffer, handle.AddrOfPinnedObject(), true, new SysIntX2(0, 0), new SysIntX2(width, height), null);
+            Queue.ReadFromBuffer(outputBuffer, ref res, true, null);
 
             return res;
         }
