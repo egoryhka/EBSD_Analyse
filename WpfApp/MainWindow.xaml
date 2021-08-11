@@ -5,26 +5,27 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="480" Width="820" MaxWidth="820"
-        ResizeMode="NoResize">
+        Title="MainWindow" Height="480" Width="830"
+        ResizeMode="NoResize"
+        FontWeight="Bold">
 
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="3*" MinWidth="410"/>
             <ColumnDefinition Width="2*" MinWidth="250"/>
-            <ColumnDefinition Width="*" MinWidth="160"/>
+            <ColumnDefinition Width="*" MinWidth="170"/>
         </Grid.ColumnDefinitions>
 
 
         <WrapPanel Background="Gray" HorizontalAlignment="Stretch" Orientation="Horizontal" Grid.Column="0">
 
-            <StackPanel Background="LightGray" Height="401" Width="400" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,9,0,0">
-                <ScrollViewer x:Name="scroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible"  CanContentScroll="True" Height="400" Width="400">
+            <StackPanel Background="LightGray" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0">
+                <ScrollViewer x:Name="scroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" CanContentScroll="True" MaxHeight="400" MaxWidth="400">
                     <Image x:Name="EBSD_Image" MouseMove="EBSD_Image_MouseMove" MouseLeftButtonDown="EBSD_Image_MouseLeftButtonDown"/>
                 </ScrollViewer>
             </StackPanel>
-            <Label FontWeight="Bold" x:Name="xLable" Content="X:" Width="67" Margin="10,0,0,0" Height="25"/>
-            <Label FontWeight="Bold" x:Name="yLable" Content="Y:" Width="67" Height="25"/>
+            <Label x:Name="xLable" Content="X:" Width="67" Margin="10,0,0,0" Height="25"/>
+            <Label x:Name="yLable" Content="Y:" Width="67" Height="25"/>
         </WrapPanel>
 
 
@@ -36,18 +37,36 @@
             <Label  Content="{Binding Value, ElementName=ExtrapolateSlider}" HorizontalContentAlignment="Center" Width="25" Margin="0,10,0,0" Height="25"/>
             <Slider HorizontalAlignment="Left" x:Name="ExtrapolateSlider" Value="5" Minimum="0" Maximum="10" IsSnapToTickEnabled="True" TickFrequency="1" Margin="0,10,0,0" TickPlacement="TopLeft" VerticalAlignment="Top" Width="120" Height="25" />
             <Button Content="Экстраполяция" x:Name="ExtrapolateButton" Width="205" Margin="5,10,0,0" Click="ExtrapolateButton_Click"/>
-
         </WrapPanel>
 
         <WrapPanel Background="LightGray" HorizontalAlignment="Stretch" Orientation="Horizontal" Grid.Column="2">
-            <StackPanel Background="Gray" HorizontalAlignment="Center" x:Name="DropPanel" AllowDrop="True" Drop="DropPanel_Drop" Height="100" Width="160">
+            <StackPanel Background="Gray" x:Name="DropPanel" AllowDrop="True" Drop="DropPanel_Drop" Height="100" Width="170">
                 <Button BorderThickness="0" Background="Wheat" x:Name="OpenFileButton" Content="Открыть" Click="OpenFileButton_Click"/>
                 <Label HorizontalContentAlignment="Center" Content="Drop EBSD data here" />
             </StackPanel>
 
-            <ScrollViewer x:Name="historyScroll" VerticalScrollBarVisibility="Visible" CanContentScroll="True" Height="370" Width="160">
 
+            <ScrollViewer VerticalScrollBarVisibility="Hidden" CanContentScroll="True" MaxHeight="364">
+                <StackPanel Orientation="Horizontal">
+                    <ListBox x:Name="ImagesNames" BorderThickness="0"  SelectionMode="Single" Height="364" Width="60" ItemsSource="{Binding ImageList}">
+                        <ListBox.Resources>
+                            <DataTemplate x:Key="data">
+                                <Label Content="{Binding Path=ImageName}"/>
+                            </DataTemplate>
+                        </ListBox.Resources>
+                    </ListBox>
+
+                    <ListBox x:Name="ImagesSources" BorderThickness="0"  SelectionMode="Single" Height="364" Width="110" ItemsSource="{Binding ImageList}">
+                        <ListBox.Resources>
+                            <DataTemplate x:Key="data">
+                                <!--<Image Source="{Binding Converter={StaticResource imgConverter}}"/>-->
+                            </DataTemplate>
+                        </ListBox.Resources>
+                    </ListBox>
+                </StackPanel>
             </ScrollViewer>
+
+
 
         </WrapPanel>
 

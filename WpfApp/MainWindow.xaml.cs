@@ -9,12 +9,15 @@ using System.Drawing;
 using Color = System.Drawing.Color;
 using System.ComponentModel;
 using Newtonsoft.Json;
+using System.Windows.Data;
+using System.IO;
 
 namespace WpfApp
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
+    /// 
     public partial class MainWindow : Window
     {
 
@@ -44,6 +47,7 @@ namespace WpfApp
             Initialize();
             InitializeComponent();
 
+            if(File.Exists("Файл.ebsd"))
             analyzer = FromJson("Файл.ebsd");
 
 
@@ -212,7 +216,9 @@ namespace WpfApp
             if (e.Result != null)
             {
                 analyzer.Ebsd_points = (EBSD_Point[,])e.Result;
-                ToJson(analyzer, "Файл.ebsd");
+
+                //               Имя текущего открытого файла
+                ToJson(analyzer, Title + ".ebsd");
                 UpdateImage();
             }
         }
@@ -298,6 +304,32 @@ namespace WpfApp
 
         #endregion Helpers
 
-
     }
+
+
+    // Из интернета ----------------------------------------------------
+
+    // Для Списка изображений
+    public class BinaryImageConverter : IValueConverter
+    {
+        object IValueConverter.Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            if (value != null && value is byte[])
+            {
+                byte[] ByteArray = value as byte[];
+                BitmapImage bmp = new BitmapImage();
+                bmp.BeginInit();
+                bmp.StreamSource = new MemoryStream(ByteArray);
+                bmp.EndInit();
+                return bmp;
+            }
+            return null;
+        }
+
+        object IValueConverter.ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            throw new Exception("The method or operation is not implemented.");
+        }
+    }
+
 }
