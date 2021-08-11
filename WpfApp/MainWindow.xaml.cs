@@ -8,7 +8,7 @@ using EBSD_Analyse;
 using System.Drawing;
 using Color = System.Drawing.Color;
 using System.ComponentModel;
-
+using Newtonsoft.Json;
 
 namespace WpfApp
 {
@@ -43,6 +43,8 @@ namespace WpfApp
         {
             Initialize();
             InitializeComponent();
+
+            analyzer = FromJson("Файл.ebsd");
 
 
             MapVariantChoose.ItemsSource = Enum.GetValues(typeof(MapVariants)).Cast<MapVariants>();
@@ -138,6 +140,25 @@ namespace WpfApp
         }
         #endregion File_Opening
 
+        // Save
+        #region File_Saving
+        private void ToJson(Analyzer analyzer, string path)
+        {
+            string json = JsonConvert.SerializeObject(analyzer);
+            using (System.IO.StreamWriter sw = new System.IO.StreamWriter(path))
+            { sw.Write(json); }
+        }
+        private Analyzer FromJson(string path)
+        {
+            string json;
+
+            using (System.IO.StreamReader sr = new System.IO.StreamReader(path))
+            { json = sr.ReadToEnd(); }
+            return JsonConvert.DeserializeObject<Analyzer>(json);
+        }
+
+        #endregion File_Saving
+
         // Processing
         #region Processing
         private void OpenEbsdFile(string path)
@@ -191,6 +212,7 @@ namespace WpfApp
             if (e.Result != null)
             {
                 analyzer.Ebsd_points = (EBSD_Point[,])e.Result;
+                ToJson(analyzer, "Файл.ebsd");
                 UpdateImage();
             }
         }
@@ -275,13 +297,6 @@ namespace WpfApp
 
 
         #endregion Helpers
-
-
-        // Shaders
-        #region Shaders
-
-
-        #endregion Shaders
 
 
     }

@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 namespace EBSD_Analyse
 {
     public class Analyzer
-    {
+    {      
         public EBSD_Point[,] Ebsd_points
         {
             get { return ebsd_points; }
