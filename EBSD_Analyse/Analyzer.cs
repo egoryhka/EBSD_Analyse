@@ -8,7 +8,9 @@ using System.Runtime.InteropServices;
 namespace EBSD_Analyse
 {
     public class Analyzer
-    {      
+    {
+        public Euler[] eulers;
+
         public EBSD_Point[,] Ebsd_points
         {
             get { return ebsd_points; }
@@ -38,7 +40,6 @@ namespace EBSD_Analyse
             }
         }
         private EBSD_Point[,] ebsd_points;
-        private Euler[] eulers;
         private int[] bcs;
 
         public int width => Ebsd_points.GetLength(0);

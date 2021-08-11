@@ -254,7 +254,7 @@ namespace WpfApp
                 int x = (int)e.GetPosition(EBSD_Image).X;
                 int y = (int)e.GetPosition(EBSD_Image).Y;
 
-                Euler pointOrientation = analyzer.Ebsd_points[x, y].Euler;
+                Euler pointOrientation = analyzer.eulers[x + y * analyzer.width];
                 MessageBox.Show("ph1: " + pointOrientation.X.ToString() + "\n" + "ph2: " + pointOrientation.Y.ToString() + "\n" + "ph3: " + pointOrientation.Z.ToString());
             }
         }

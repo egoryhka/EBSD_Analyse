@@ -5,32 +5,63 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="800">
+        Title="MainWindow" Height="480" Width="820" MaxWidth="820"
+        ResizeMode="NoResize">
+
     <Grid>
-        <StackPanel x:Name="DropPanel" AllowDrop="True" Drop="DropPanel_Drop" VerticalAlignment="Top" HorizontalAlignment="Right" Height="100" Width="125" Margin="0,10,10,0" Background="LightGray" >
-            <Button x:Name="OpenFileButton" Content="Открыть" Click="OpenFileButton_Click"/>
-            <Label Content="Drop EBSD data here" HorizontalAlignment="Center"/>
-        </StackPanel>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*" MinWidth="410"/>
+            <ColumnDefinition Width="2*" MinWidth="250"/>
+            <ColumnDefinition Width="*" MinWidth="160"/>
+        </Grid.ColumnDefinitions>
 
-        <StackPanel Background="LightGray" Height="400" Width="400" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0">
-            <ScrollViewer Name="scroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible"  CanContentScroll="True" Height="400" Width="400">
-                <Image x:Name="EBSD_Image" MouseMove="EBSD_Image_MouseMove" MouseLeftButtonDown="EBSD_Image_MouseLeftButtonDown"/>
+
+        <WrapPanel Background="Gray" HorizontalAlignment="Stretch" Orientation="Horizontal" Grid.Column="0">
+
+            <StackPanel Background="LightGray" Height="401" Width="400" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,9,0,0">
+                <ScrollViewer x:Name="scroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible"  CanContentScroll="True" Height="400" Width="400">
+                    <Image x:Name="EBSD_Image" MouseMove="EBSD_Image_MouseMove" MouseLeftButtonDown="EBSD_Image_MouseLeftButtonDown"/>
+                </ScrollViewer>
+            </StackPanel>
+            <Label FontWeight="Bold" x:Name="xLable" Content="X:" Width="67" Margin="10,0,0,0" Height="25"/>
+            <Label FontWeight="Bold" x:Name="yLable" Content="Y:" Width="67" Height="25"/>
+        </WrapPanel>
+
+
+        <WrapPanel Background="DarkGray" HorizontalAlignment="Stretch" Orientation="Horizontal" Grid.Column="1">
+            <Label Content="Вид изображения:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="110" Margin="0,9,0,0" Height="25"/>
+            <ComboBox x:Name="MapVariantChoose"  HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="25" Margin="5,9,0,0" SelectionChanged="MapVariantChoose_SelectionChanged"  />
+
+            <Label  Content="Итераций:" Width="70" Margin="0,10,0,0" Height="25"/>
+            <Label  Content="{Binding Value, ElementName=ExtrapolateSlider}" HorizontalContentAlignment="Center" Width="25" Margin="0,10,0,0" Height="25"/>
+            <Slider HorizontalAlignment="Left" x:Name="ExtrapolateSlider" Value="5" Minimum="0" Maximum="10" IsSnapToTickEnabled="True" TickFrequency="1" Margin="0,10,0,0" TickPlacement="TopLeft" VerticalAlignment="Top" Width="120" Height="25" />
+            <Button Content="Экстраполяция" x:Name="ExtrapolateButton" Width="205" Margin="5,10,0,0" Click="ExtrapolateButton_Click"/>
+
+        </WrapPanel>
+
+        <WrapPanel Background="LightGray" HorizontalAlignment="Stretch" Orientation="Horizontal" Grid.Column="2">
+            <StackPanel Background="Gray" HorizontalAlignment="Center" x:Name="DropPanel" AllowDrop="True" Drop="DropPanel_Drop" Height="100" Width="160">
+                <Button BorderThickness="0" Background="Wheat" x:Name="OpenFileButton" Content="Открыть" Click="OpenFileButton_Click"/>
+                <Label HorizontalContentAlignment="Center" Content="Drop EBSD data here" />
+            </StackPanel>
+
+            <ScrollViewer x:Name="historyScroll" VerticalScrollBarVisibility="Visible" CanContentScroll="True" Height="370" Width="160">
+
             </ScrollViewer>
-        </StackPanel>
 
-        <Label Content="Вид изображения:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="117" Margin="410,10,0,0"/>
-        <ComboBox x:Name="MapVariantChoose"  HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="26" SelectionChanged="MapVariantChoose_SelectionChanged" Margin="527,10,0,0" />
+        </WrapPanel>
 
 
         <ProgressBar x:Name="ProgressBar" ValueChanged="ProgressBar_ValueChanged" Minimum="0" Maximum="100" HorizontalAlignment="Stretch" Height="10" VerticalAlignment="Bottom" Visibility="Hidden"/>
-        <Button Content="Экстраполяция" x:Name="ExtrapolateButton" HorizontalAlignment="Left" Margin="415,90,0,0" VerticalAlignment="Top" Width="212" Click="ExtrapolateButton_Click"/>
-        <Slider HorizontalAlignment="Left" x:Name="ExtrapolateSlider" Value="1" Minimum="0" Maximum="10" IsSnapToTickEnabled="True" TickFrequency="1" Margin="507,63,0,0" TickPlacement="TopLeft" VerticalAlignment="Top" Width="120" />
-        <Label  Content="Итераций:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="67" Margin="410,63,0,0" Height="25"/>
-        <Label  Content="{Binding ElementName=ExtrapolateSlider, Path=Value}" HorizontalAlignment="Left" VerticalAlignment="Top" Width="25" Margin="482,63,0,0" Height="25"/>
-       
-        <Label x:Name="xLable" Content="X:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="67" Margin="10,549,0,0" Height="25"/>
-        <Label x:Name="yLable" Content="Y:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="67" Margin="82,549,0,0" Height="25"/>
+
+
+
 
     </Grid>
+
+
+
+
+
 
 </Window>
