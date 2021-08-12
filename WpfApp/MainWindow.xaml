@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="480" Width="830"
+        Title="MainWindow" Height="519" Width="830"
         ResizeMode="NoResize"
         FontWeight="Bold">
 
@@ -26,6 +26,79 @@
             </StackPanel>
             <Label x:Name="xLable" Content="X:" Width="67" Margin="10,0,0,0" Height="25"/>
             <Label x:Name="yLable" Content="Y:" Width="67" Height="25"/>
+
+            <Viewport3D Grid.Row="0" Width="80" Height="80">
+                <Viewport3D.Camera>
+                    <PerspectiveCamera Position="2,2,2" LookDirection="-1,-1,-1"  />
+                </Viewport3D.Camera>
+                <Viewport3D.Children>
+                    
+                    <ModelVisual3D>
+                        <ModelVisual3D.Content>
+                            <DirectionalLight Direction="0 -3 0" Color="White" />
+                        </ModelVisual3D.Content>
+                    </ModelVisual3D>
+
+
+                    <ModelVisual3D>
+                        <ModelVisual3D.Content>
+                            <GeometryModel3D>
+                                <GeometryModel3D.Geometry>
+                                    <MeshGeometry3D Positions="0,0,0
+                                                               1,0,0
+                                                               0,1,0 
+                                                               1,1,0 
+                                                               0,0,1
+                                                               1,0,1
+                                                               0,1,1
+                                                               1,1,1"
+                                                    
+                                      TriangleIndices="0,2,1 1,2,3 0,4,2 2,4,6 
+                                                       0,1,4 1,5,4 1,7,5 1,3,7
+                                                       4,5,6 7,6,5 2,6,3 3,6,7"
+                                                    
+                                      Normals="1,0,0 1,0,0
+                                               0,1,0 0,1,0
+                                               1,0,0 1,0,0
+                                               0,1,0 0,1,0 "
+                                                    />
+                                </GeometryModel3D.Geometry>
+                                <GeometryModel3D.Material>
+                                    <DiffuseMaterial Brush="White" />
+                                </GeometryModel3D.Material>
+                            </GeometryModel3D>
+                        </ModelVisual3D.Content>
+
+
+                        <ModelVisual3D.Transform>
+                            <Transform3DGroup>
+
+                                <Transform3DGroup.Children>
+                                    <RotateTransform3D CenterX="0.5" CenterY="0.5" CenterZ="0.5">
+                                        <RotateTransform3D.Rotation>
+                                            <AxisAngleRotation3D x:Name="cube_yRotation" Angle="0" Axis="1 0 0" />
+                                        </RotateTransform3D.Rotation>
+                                    </RotateTransform3D>
+                                    <RotateTransform3D CenterX="0.5" CenterY="0.5" CenterZ="0.5">
+                                        <RotateTransform3D.Rotation>
+                                            <AxisAngleRotation3D x:Name="cube_zRotation" Angle="0" Axis="0 1 0" />
+                                        </RotateTransform3D.Rotation>
+                                    </RotateTransform3D>
+                                    <RotateTransform3D CenterX="0.5" CenterY="0.5" CenterZ="0.5">
+                                        <RotateTransform3D.Rotation>
+                                            <AxisAngleRotation3D x:Name="cube_xRotation" Angle="0" Axis="0 0 1" />
+                                        </RotateTransform3D.Rotation>
+                                    </RotateTransform3D>
+                                </Transform3DGroup.Children>
+                            </Transform3DGroup>
+
+                        </ModelVisual3D.Transform>
+
+
+                    </ModelVisual3D>
+                </Viewport3D.Children>
+            </Viewport3D>
+            <Image Source="" Panel.ZIndex="-1" Height="80" Width="80" Margin="-80,0,0,0"/>
         </WrapPanel>
 
 
@@ -46,9 +119,9 @@
             </StackPanel>
 
 
-            <ScrollViewer VerticalScrollBarVisibility="Hidden" CanContentScroll="True" MaxHeight="364">
+            <ScrollViewer VerticalScrollBarVisibility="Hidden" CanContentScroll="True" Height="403">
                 <StackPanel Orientation="Horizontal">
-                    <ListBox x:Name="ImagesNames" BorderThickness="0"  SelectionMode="Single" Height="364" Width="60" ItemsSource="{Binding ImageList}">
+                    <ListBox x:Name="ImagesNames" BorderThickness="0"  SelectionMode="Single"  Width="60" ItemsSource="{Binding ImageList}">
                         <ListBox.Resources>
                             <DataTemplate x:Key="data">
                                 <Label Content="{Binding Path=ImageName}"/>
@@ -56,7 +129,7 @@
                         </ListBox.Resources>
                     </ListBox>
 
-                    <ListBox x:Name="ImagesSources" BorderThickness="0"  SelectionMode="Single" Height="364" Width="110" ItemsSource="{Binding ImageList}">
+                    <ListBox x:Name="ImagesSources" BorderThickness="0"  SelectionMode="Single" Width="110" ItemsSource="{Binding ImageList}">
                         <ListBox.Resources>
                             <DataTemplate x:Key="data">
                                 <!--<Image Source="{Binding Converter={StaticResource imgConverter}}"/>-->

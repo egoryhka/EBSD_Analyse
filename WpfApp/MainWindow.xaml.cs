@@ -11,6 +11,8 @@ using System.ComponentModel;
 using Newtonsoft.Json;
 using System.Windows.Data;
 using System.IO;
+using System.Threading;
+using System.Windows.Media.Media3D;
 
 namespace WpfApp
 {
@@ -47,12 +49,13 @@ namespace WpfApp
             Initialize();
             InitializeComponent();
 
-            if(File.Exists("Файл.ebsd"))
-            analyzer = FromJson("Файл.ebsd");
+            if (File.Exists("Файл.ebsd"))
+                analyzer = FromJson("Файл.ebsd");
 
 
             MapVariantChoose.ItemsSource = Enum.GetValues(typeof(MapVariants)).Cast<MapVariants>();
             MapVariantChoose.SelectedIndex = 0;
+
         }
 
         // Open
@@ -218,7 +221,7 @@ namespace WpfApp
                 analyzer.Ebsd_points = (EBSD_Point[,])e.Result;
 
                 //               Имя текущего открытого файла
-                ToJson(analyzer, Title + ".ebsd");
+                ToJson(analyzer, /*Title +*/ "Файл.ebsd");
                 UpdateImage();
             }
         }
@@ -261,7 +264,10 @@ namespace WpfApp
                 int y = (int)e.GetPosition(EBSD_Image).Y;
 
                 Euler pointOrientation = analyzer.eulers[x + y * analyzer.width];
-                MessageBox.Show("ph1: " + pointOrientation.X.ToString() + "\n" + "ph2: " + pointOrientation.Y.ToString() + "\n" + "ph3: " + pointOrientation.Z.ToString());
+                cube_xRotation.Angle = pointOrientation.X;
+                cube_yRotation.Angle = pointOrientation.Y;
+                cube_zRotation.Angle = pointOrientation.Z;
+
             }
         }
 
@@ -331,5 +337,11 @@ namespace WpfApp
             throw new Exception("The method or operation is not implemented.");
         }
     }
+
+
+
+
+
+
 
 }
