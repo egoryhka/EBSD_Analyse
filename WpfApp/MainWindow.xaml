@@ -30,17 +30,87 @@
             <Viewport3D Grid.Row="0" Width="80" Height="80">
 
                 <Viewport3D.Camera>
-                    <PerspectiveCamera Position="2,2,2" LookDirection="-1,-1,-1"  />
+                    <PerspectiveCamera Position="-1.5,1.5,1.5" LookDirection="1,-1,-1"  />
                 </Viewport3D.Camera>
 
 
 
                 <Viewport3D.Children>
+                    <!--<ModelVisual3D>
+                        <ModelVisual3D.Content>
+                            <DirectionalLight Direction="0,-1,0" Color="LightGray" />
+                        </ModelVisual3D.Content>
+                    </ModelVisual3D>-->
                     <ModelVisual3D>
                         <ModelVisual3D.Content>
-                            <DirectionalLight Direction="0 -3 0" Color="White" />
+                            <AmbientLight Color="White" />
                         </ModelVisual3D.Content>
                     </ModelVisual3D>
+
+
+
+                    <ModelVisual3D x:Name="Cube">
+                        <ModelVisual3D.Transform>
+                            <Transform3DGroup>
+
+                                <Transform3DGroup.Children>
+                                    <RotateTransform3D>
+                                        <RotateTransform3D.Rotation>
+                                            <AxisAngleRotation3D x:Name="cube_xRotation" Angle="0" Axis="1 0 0" />
+                                        </RotateTransform3D.Rotation>
+                                    </RotateTransform3D>
+                                    <RotateTransform3D>
+                                        <RotateTransform3D.Rotation>
+                                            <AxisAngleRotation3D x:Name="cube_zRotation" Angle="0" Axis="0 1 0" />
+                                        </RotateTransform3D.Rotation>
+                                    </RotateTransform3D>
+                                    <RotateTransform3D>
+                                        <RotateTransform3D.Rotation>
+                                            <AxisAngleRotation3D x:Name="cube_yRotation" Angle="0" Axis="0 0 1" />
+                                        </RotateTransform3D.Rotation>
+                                    </RotateTransform3D>
+                                </Transform3DGroup.Children>
+                            </Transform3DGroup>
+                        </ModelVisual3D.Transform>
+
+
+                        <ModelVisual3D.Content>
+                            <GeometryModel3D>
+                                <GeometryModel3D.Geometry>
+                                    <MeshGeometry3D Positions="-.5,-.5,-.5
+                                                               .5,-.5,-.5
+                                                               -.5,.5,-.5 
+                                                               .5,.5,-.5 
+                                                               -.5,-.5,.5
+                                                               .5,-.5,.5
+                                                               -.5,.5,.5
+                                                               .5,.5,.5"
+                                                    
+                                      TriangleIndices="0,2,1 1,2,3 0,4,2 2,4,6 
+                                                       0,1,4 1,5,4 1,7,5 1,3,7
+                                                       4,5,6 7,6,5 2,6,3 3,6,7"
+                                                    
+                                      TextureCoordinates="0,1 1,1 0,0 1,0 
+                                                          0,1 1,1 0,0 1,0"
+                                                    />
+
+                                </GeometryModel3D.Geometry>
+
+                                <GeometryModel3D.Material>
+                                    <DiffuseMaterial>
+                                        <DiffuseMaterial.Brush>
+                                            <ImageBrush ImageSource="cubeTexture.png" />
+                                        </DiffuseMaterial.Brush>
+                                    </DiffuseMaterial>
+                                </GeometryModel3D.Material>
+
+                            </GeometryModel3D>
+
+                        </ModelVisual3D.Content>
+
+                    </ModelVisual3D>
+
+
 
                     <ModelVisual3D>
                         <ModelVisual3D.Content>
@@ -48,16 +118,21 @@
                             <GeometryModel3D>
 
                                 <GeometryModel3D.Geometry>
-
-                                    <MeshGeometry3D Positions="0,0,0.05
-                                                                   2,0,0.05 
-                                                                   2,0,0
+                                    <!--x z y-->
+                                    <MeshGeometry3D Positions="    
+                                                                   0, 0, 0
+                                                                   -1, 0.1, 0
+                                                                   0, -0.1, 0
+                                                                                   
+                                                                   0, 0, 0
+                                                                   0, -0.1, 0
+                                                                   0, 0.1, 1
+                                                    
+                                                                   -0.025, -0.025,  -0.025
+                                                                   0.025, -0.025, 0.025
+                                                                   0, 1, 0"
                                                         
-                                                                   2,0,0
-                                                                   0,0,0
-                                                                   0,0,0.05 "
-                                                        
-                                                        TriangleIndices="0 1 2 3 4 5"/>
+                                                        TriangleIndices="0 1 2 3 4 5 6 7 8 "/>
 
                                 </GeometryModel3D.Geometry>
 
@@ -70,67 +145,34 @@
                             </GeometryModel3D>
                         </ModelVisual3D.Content>
 
-                    </ModelVisual3D>
-
-
-                    <ModelVisual3D x:Name="AxesModel">
-                        <ModelVisual3D.Transform>
+                        <!--<ModelVisual3D.Transform>
                             <Transform3DGroup>
 
                                 <Transform3DGroup.Children>
                                     <RotateTransform3D CenterX="0.5" CenterY="0.5" CenterZ="0.5">
                                         <RotateTransform3D.Rotation>
-                                            <AxisAngleRotation3D x:Name="cube_yRotation" Angle="0" Axis="1 0 0" />
+                                            <AxisAngleRotation3D Angle="0" Axis="1 0 0" />
                                         </RotateTransform3D.Rotation>
                                     </RotateTransform3D>
                                     <RotateTransform3D CenterX="0.5" CenterY="0.5" CenterZ="0.5">
                                         <RotateTransform3D.Rotation>
-                                            <AxisAngleRotation3D x:Name="cube_zRotation" Angle="0" Axis="0 1 0" />
+                                            <AxisAngleRotation3D Angle="0" Axis="0 1 0" />
                                         </RotateTransform3D.Rotation>
                                     </RotateTransform3D>
                                     <RotateTransform3D CenterX="0.5" CenterY="0.5" CenterZ="0.5">
                                         <RotateTransform3D.Rotation>
-                                            <AxisAngleRotation3D x:Name="cube_xRotation" Angle="0" Axis="0 0 1" />
+                                            <AxisAngleRotation3D Angle="0" Axis="0 0 1" />
                                         </RotateTransform3D.Rotation>
                                     </RotateTransform3D>
                                 </Transform3DGroup.Children>
                             </Transform3DGroup>
-                        </ModelVisual3D.Transform>
-
-
-                        <ModelVisual3D.Content>
-                            <GeometryModel3D>
-                                <GeometryModel3D.Geometry>
-                                    <MeshGeometry3D Positions="0,0,0
-                                                               1,0,0
-                                                               0,1,0 
-                                                               1,1,0 
-                                                               0,0,1
-                                                               1,0,1
-                                                               0,1,1
-                                                               1,1,1"
-                                                    
-                                      TriangleIndices="0,2,1 1,2,3 0,4,2 2,4,6 
-                                                       0,1,4 1,5,4 1,7,5 1,3,7
-                                                       4,5,6 7,6,5 2,6,3 3,6,7"
-                                                    
-                                      Normals="1,0,0 1,0,0
-                                               0,1,0 0,1,0
-                                               1,0,0 1,0,0
-                                               0,1,0 0,1,0 "
-                                                    />
-                                </GeometryModel3D.Geometry>
-                                <GeometryModel3D.Material>
-                                    <DiffuseMaterial Brush="White" />
-                                </GeometryModel3D.Material>
-                            </GeometryModel3D>
-
-                        </ModelVisual3D.Content>
-
-
-
-
+                        </ModelVisual3D.Transform>-->
                     </ModelVisual3D>
+
+
+
+
+
                 </Viewport3D.Children>
             </Viewport3D>
 

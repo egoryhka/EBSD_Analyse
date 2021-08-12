@@ -56,13 +56,6 @@ namespace WpfApp
             MapVariantChoose.ItemsSource = Enum.GetValues(typeof(MapVariants)).Cast<MapVariants>();
             MapVariantChoose.SelectedIndex = 0;
 
-            Model3DGroup Axes = new Model3DGroup();
-            Axes.Children.Add(AddLine(new Point3D(0, 0, 0), new Point3D(2, 0, 0), "xAxis"));
-            Axes.Children.Add(AddLine(new Point3D(0, 0, 0), new Point3D(0, 2, 0), "yAxis"));
-            Axes.Children.Add(AddLine(new Point3D(0, 0, 0), new Point3D(0, 0, 2), "zAxis"));
-
-            AxesModel.Content = Axes;
-
         }
 
         // Open
@@ -318,27 +311,10 @@ namespace WpfApp
         #endregion Helpers
 
 
-
-        // Из интернета ----------------------------------------------------
-       
-        // Для осей
-        private Model3D AddLine(Point3D startPoint, Point3D EndPoint, string name)
-        {
-            SolidColorBrush brush = new SolidColorBrush(Colors.Black);
-            var material = new DiffuseMaterial(brush);
-            var mesh = new MeshGeometry3D();
-            mesh.Positions.Add(startPoint);
-            mesh.Positions.Add(EndPoint);
-            mesh.Positions.Add(new Point3D(100, 0, 100));
-
-            mesh.TriangleIndices.Add(0);
-            mesh.TriangleIndices.Add(1);
-            mesh.TriangleIndices.Add(0);
-            return new GeometryModel3D(mesh, material);
-        }
     }
 
 
+    // Из интернета ----------------------------------------------------
 
     // Для Списка изображений
     public class BinaryImageConverter : IValueConverter
