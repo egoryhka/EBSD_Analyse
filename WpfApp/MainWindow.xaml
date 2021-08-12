@@ -5,29 +5,29 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="519" Width="830"
-        ResizeMode="NoResize"
+        Title="MainWindow" Height="600" Width="1000"
+        ResizeMode="CanMinimize"
         FontWeight="Bold">
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="3*" MinWidth="410"/>
-            <ColumnDefinition Width="2*" MinWidth="250"/>
-            <ColumnDefinition Width="*" MinWidth="170"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
 
 
         <WrapPanel Background="Gray" HorizontalAlignment="Stretch" Orientation="Horizontal" Grid.Column="0">
 
-            <StackPanel Background="LightGray" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0">
+            <StackPanel Background="LightGray" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10">
                 <ScrollViewer x:Name="scroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" CanContentScroll="True" MaxHeight="400" MaxWidth="400">
-                    <Image x:Name="EBSD_Image" MouseMove="EBSD_Image_MouseMove" MouseLeftButtonDown="EBSD_Image_MouseLeftButtonDown"/>
+                    <Image x:Name="EBSD_Image" MouseWheel="EBSD_Image_MouseWheel" SnapsToDevicePixels="True" MouseMove="EBSD_Image_MouseMove" MouseLeftButtonDown="EBSD_Image_MouseLeftButtonDown"/>
                 </ScrollViewer>
             </StackPanel>
             <Label x:Name="xLable" Content="X:" Width="67" Margin="10,0,0,0" Height="25"/>
             <Label x:Name="yLable" Content="Y:" Width="67" Height="25"/>
 
-            <Viewport3D Grid.Row="0" Width="80" Height="80">
+            <Viewport3D Grid.Row="0" Width="150" Height="150">
 
                 <Viewport3D.Camera>
                     <PerspectiveCamera Position="-1.5,1.5,1.5" LookDirection="1,-1,-1"  />
@@ -43,10 +43,10 @@
                     </ModelVisual3D>-->
                     <ModelVisual3D>
                         <ModelVisual3D.Content>
-                            <AmbientLight Color="White" />
+                            <DirectionalLight Direction="1,-1,-1" Color="LightPink" />
                         </ModelVisual3D.Content>
                     </ModelVisual3D>
-
+                  
 
 
                     <ModelVisual3D x:Name="Cube">
@@ -77,29 +77,65 @@
                         <ModelVisual3D.Content>
                             <GeometryModel3D>
                                 <GeometryModel3D.Geometry>
-                                    <MeshGeometry3D Positions="-.5,-.5,-.5
-                                                               .5,-.5,-.5
-                                                               -.5,.5,-.5 
-                                                               .5,.5,-.5 
-                                                               -.5,-.5,.5
-                                                               .5,-.5,.5
-                                                               -.5,.5,.5
-                                                               .5,.5,.5"
+                                    <MeshGeometry3D Positions="-0.5 , 0.5 , 0.5, 
+                                                                0.5 , 0.5 , 0.5, 
+                                                               -0.5 ,-0.5 , 0.5, 
+                                                                0.5 ,-0.5 , 0.5, 
+
+                                                               -0.5 , 0.5 , -0.5,
+                                                                0.5 , 0.5 , -0.5,
+                                                               -0.5 ,-0.5 , -0.5,
+                                                                0.5 ,-0.5 , -0.5 
                                                     
-                                      TriangleIndices="0,2,1 1,2,3 0,4,2 2,4,6 
-                                                       0,1,4 1,5,4 1,7,5 1,3,7
-                                                       4,5,6 7,6,5 2,6,3 3,6,7"
                                                     
-                                      TextureCoordinates="0,1 1,1 0,0 1,0 
-                                                          0,1 1,1 0,0 1,0"
-                                                    />
+                                                                0, 0, 0
+                                                                -1, 0.1, 0
+                                                                0, -0.1, 0
+                                                                                
+                                                                0, 0, 0
+                                                                0, -0.1, 0
+                                                                0, 0.1, 1
+                                                                
+                                                                -0.025, -0.025,  -0.025
+                                                                0.025, -0.025, 0.025
+                                                                0, 1, 0"
+                                                    
+                                      TriangleIndices="0 , 2 , 3 
+                                                       0 , 3 , 1 
+                                                       0 , 4 , 5 
+                                                       0 , 5 , 1 
+                                                       0 , 4 , 6 
+                                                       0 , 6 , 2 
+                                                       2 , 6 , 7 
+                                                       2 , 7 , 3 
+                                                       1 , 5 , 7 
+                                                       1 , 7 , 3 
+                                                       4 , 6 , 7 
+                                                       4 , 7 , 5
+                                                    
+                                                    8,9,10 11,12,13 14,15,16 
+                                                    "
+                                                    
+                                                   Normals="1,0,0 1,0,0
+                                                            0,1,0 0,1,0
+                                                            1,0,0 1,0,0
+                                                            0,1,0 0,1,0"/>
 
                                 </GeometryModel3D.Geometry>
+
+                                <GeometryModel3D.BackMaterial>
+                                    <DiffuseMaterial>
+                                        <DiffuseMaterial.Brush>
+                                            <SolidColorBrush Color="White"></SolidColorBrush>
+                                        </DiffuseMaterial.Brush>
+                                    </DiffuseMaterial>
+                                </GeometryModel3D.BackMaterial>
+
 
                                 <GeometryModel3D.Material>
                                     <DiffuseMaterial>
                                         <DiffuseMaterial.Brush>
-                                            <ImageBrush ImageSource="cubeTexture.png" />
+                                            <SolidColorBrush Color="White"></SolidColorBrush>
                                         </DiffuseMaterial.Brush>
                                     </DiffuseMaterial>
                                 </GeometryModel3D.Material>
@@ -190,15 +226,15 @@
         </WrapPanel>
 
         <WrapPanel Background="LightGray" HorizontalAlignment="Stretch" Orientation="Horizontal" Grid.Column="2">
-            <StackPanel Background="Gray" x:Name="DropPanel" AllowDrop="True" Drop="DropPanel_Drop" Height="100" Width="170">
-                <Button BorderThickness="0" Background="Wheat" x:Name="OpenFileButton" Content="Открыть" Click="OpenFileButton_Click"/>
+            <StackPanel Background="Gray" x:Name="DropPanel" AllowDrop="True" Drop="DropPanel_Drop" Height="100" Width="200">
+                <Button BorderThickness="2" Background="Wheat" x:Name="OpenFileButton" Content="Открыть" Click="OpenFileButton_Click"/>
                 <Label HorizontalContentAlignment="Center" Content="Drop EBSD data here" />
             </StackPanel>
 
 
-            <ScrollViewer VerticalScrollBarVisibility="Hidden" CanContentScroll="True" Height="403">
+            <ScrollViewer VerticalScrollBarVisibility="Hidden" CanContentScroll="True" Height="484">
                 <StackPanel Orientation="Horizontal">
-                    <ListBox x:Name="ImagesNames" BorderThickness="0"  SelectionMode="Single"  Width="60" ItemsSource="{Binding ImageList}">
+                    <ListBox x:Name="ImagesNames" BorderThickness="0"  SelectionMode="Single"  Width="90" ItemsSource="{Binding ImageList}">
                         <ListBox.Resources>
                             <DataTemplate x:Key="data">
                                 <Label Content="{Binding Path=ImageName}"/>

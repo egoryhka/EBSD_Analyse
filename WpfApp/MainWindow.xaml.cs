@@ -191,8 +191,9 @@ namespace WpfApp
             var colors = analyzer.GetColorMap((MapVariants)MapVariantChoose.SelectedItem); // gpu work 
 
             Bitmap bmp = ByteArrayToBitmap(colors, width, height);
-
+  
             EBSD_Image.Source = CreateBitmapSourceFromBitmap(bmp);
+
             bmp.Save("Ebsd_Image");
         }
         #endregion Processing
@@ -252,24 +253,54 @@ namespace WpfApp
 
                 xLable.Content = "X: " + x;
                 yLable.Content = "Y: " + y;
-            }
-        }
-
-        private void EBSD_Image_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            BitmapSource bitmapSource = EBSD_Image.Source as BitmapSource;
-            if (bitmapSource != null)
-            {
-                int x = (int)e.GetPosition(EBSD_Image).X;
-                int y = (int)e.GetPosition(EBSD_Image).Y;
 
                 Euler pointOrientation = analyzer.eulers[x + y * analyzer.width];
                 cube_xRotation.Angle = pointOrientation.X;
                 cube_yRotation.Angle = pointOrientation.Y;
                 cube_zRotation.Angle = pointOrientation.Z;
-
             }
         }
+
+        private void EBSD_Image_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            //BitmapSource bitmapSource = EBSD_Image.Source as BitmapSource;
+            //if (bitmapSource != null)
+            //{
+            //    int x = (int)e.GetPosition(EBSD_Image).X;
+            //    int y = (int)e.GetPosition(EBSD_Image).Y;
+
+            //    Euler pointOrientation = analyzer.eulers[x + y * analyzer.width];
+            //    cube_xRotation.Angle = pointOrientation.X;
+            //    cube_yRotation.Angle = pointOrientation.Y;
+            //    cube_zRotation.Angle = pointOrientation.Z;
+
+            //}
+        }
+
+        double scale = 1.0;
+        double minScale = 1;
+        double maxScale = 5.0;
+
+      
+        private void EBSD_Image_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+        {
+            var position = e.MouseDevice.GetPosition(EBSD_Image);
+
+            if (e.Delta > 0)
+                scale += 0.1;
+            else
+                scale -= 0.1;
+
+            if (scale > maxScale)
+                scale = maxScale;
+            if (scale < minScale)
+                scale = minScale;
+
+            EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, position.X, position.Y);
+
+        }
+
+
 
         #endregion Events
 
@@ -308,6 +339,7 @@ namespace WpfApp
 
 
 
+
         #endregion Helpers
 
 
@@ -338,10 +370,10 @@ namespace WpfApp
             throw new Exception("The method or operation is not implemented.");
         }
 
-       
+
     }
 
-   
+
 
 
 
