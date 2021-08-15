@@ -192,7 +192,7 @@ namespace WpfApp
             var colors = analyzer.GetColorMap((MapVariants)MapVariantChoose.SelectedItem); // gpu work 
 
             Bitmap bmp = ByteArrayToBitmap(colors, width, height);
-  
+
             EBSD_Image.Source = CreateBitmapSourceFromBitmap(bmp);
 
             bmp.Save("Ebsd_Image");
@@ -255,10 +255,15 @@ namespace WpfApp
                 xLable.Content = "X: " + x;
                 yLable.Content = "Y: " + y;
 
-                Euler pointOrientation = analyzer.eulers[x + y * analyzer.width];
-                cube_xRotation.Angle = pointOrientation.X;
-                cube_yRotation.Angle = pointOrientation.Y;
-                cube_zRotation.Angle = pointOrientation.Z;
+                if (x <= analyzer.width - 1 && x >= 0 && y <= analyzer.height - 1 && y >= 0)
+                {
+                    Euler pointOrientation = analyzer.eulers[x + y * analyzer.width];
+
+                    cube_xRotation.Angle = pointOrientation.X;
+                    cube_yRotation.Angle = pointOrientation.Y;
+                    cube_zRotation.Angle = pointOrientation.Z;
+                }
+
 
 
                 EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, x, y);
@@ -287,23 +292,35 @@ namespace WpfApp
         double maxScale = 10.0;
 
 
-        private void EBSD_Image_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+        private void IncreaseImageSizeButton_Click(object sender, RoutedEventArgs e)
         {
-           
-            var position = e.MouseDevice.GetPosition(EBSD_Image);
+            int x = (int)EBSD_Image.RenderSize.Width / 2;
+            int y = (int)EBSD_Image.RenderSize.Height / 2;
 
-            if (e.Delta > 0)
-                scale += 0.5;
-            else
-                scale -= 0.5;
+
+            scale += 0.5;
+
+
 
             if (scale > maxScale)
                 scale = maxScale;
+
+
+            EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, x, y);
+        }
+
+        private void DecreaseImageSizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            int x = (int)EBSD_Image.RenderSize.Width / 2;
+            int y = (int)EBSD_Image.RenderSize.Height / 2;
+
+
+            scale -= 0.5;
+
             if (scale < minScale)
                 scale = minScale;
 
-            EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, position.X, position.Y);
-
+            EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, x, y);
         }
 
         #endregion Events
@@ -339,9 +356,10 @@ namespace WpfApp
 
 
 
+
         #endregion Helpers
 
-      
+
     }
 
 
