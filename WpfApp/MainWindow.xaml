@@ -11,7 +11,7 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="2.1*"/>
             <ColumnDefinition Width="2*"/>
             <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
@@ -19,9 +19,9 @@
 
         <WrapPanel Background="Gray" HorizontalAlignment="Stretch" Orientation="Horizontal" Grid.Column="0">
 
-            <StackPanel Background="LightGray" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10">
-                <ScrollViewer x:Name="scroll" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Visible" CanContentScroll="True" MaxHeight="400" MaxWidth="400">
-                    <Image x:Name="EBSD_Image" MouseWheel="EBSD_Image_MouseWheel" SnapsToDevicePixels="True" MouseMove="EBSD_Image_MouseMove" MouseLeftButtonDown="EBSD_Image_MouseLeftButtonDown"/>
+            <StackPanel Background="LightGray" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,9,10,10">
+                <ScrollViewer x:Name="scroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" CanContentScroll="True" MaxHeight="400" MaxWidth="400" Height="400" Width="380">
+                    <Image x:Name="EBSD_Image" RenderOptions.BitmapScalingMode="HighQuality" MouseMove="EBSD_Image_MouseMove" MouseLeftButtonDown="EBSD_Image_MouseLeftButtonDown" />
                 </ScrollViewer>
             </StackPanel>
             <Label x:Name="xLable" Content="X:" Width="67" Margin="10,0,0,0" Height="25"/>
@@ -144,11 +144,7 @@
                                                   
                                               -1, 0, 0 
                                               0, 0, 1 
-                                              0, 1, 0            
-                                                        
-                                              "
-                                                        
-                                                        />
+                                              0, 1, 0  " />
 
                                     </GeometryModel3D.Geometry>
 
@@ -168,28 +164,75 @@
                                             </DiffuseMaterial.Brush>
                                         </DiffuseMaterial>
                                     </GeometryModel3D.Material>
-
                                 </GeometryModel3D>
-                                <GeometryModel3D>
 
+                                <GeometryModel3D>
                                     <GeometryModel3D.Geometry>
                                         <!--x z y-->
                                         <MeshGeometry3D Positions="    
                                                                    0, 0, 0
                                                                    -1.5, 0.1, 0
                                                                    0, -0.1, 0
+                                                                                 
+                                                                   0, -0.05, 0.05
+                                                                   -1.5, 0.1, 0
+                                                                   0, -0.05, -0.05"
+                                                        
+                                                        TriangleIndices=" 0 1 2   3 4 5  "/>
+
+                                    </GeometryModel3D.Geometry>
+
+                                    <GeometryModel3D.BackMaterial>
+                                        <EmissiveMaterial Brush="ForestGreen"/>
+                                    </GeometryModel3D.BackMaterial>
+
+                                    <GeometryModel3D.Material>
+                                        <EmissiveMaterial Brush="ForestGreen"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+
+
+                                <GeometryModel3D>
+                                    <GeometryModel3D.Geometry>
+                                        <!--x z y-->
+                                        <MeshGeometry3D Positions="    
+                                                                   
                                                                                    
                                                                    0, 0, 0
                                                                    0, -0.1, 0
                                                                    0, 0.1, 1.5
                                                     
+                                                               
+                                                                   0.05, -0.05, 0
+                                                                   -0.05, -0.05, 0
+                                                                   0, 0.1, 1.5 "
+                                                        
+                                                        TriangleIndices=" 0 1 2   3 4 5  "/>
+
+                                    </GeometryModel3D.Geometry>
+
+                                    <GeometryModel3D.BackMaterial>
+                                        <EmissiveMaterial Brush="Blue"/>
+                                    </GeometryModel3D.BackMaterial>
+
+                                    <GeometryModel3D.Material>
+                                        <EmissiveMaterial Brush="Blue"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+
+                                <GeometryModel3D>
+                                    <GeometryModel3D.Geometry>
+                                        <!--x z y-->
+                                        <MeshGeometry3D Positions="    
                                                                    -0.025, -0.025,  -0.025
                                                                    0.025, -0.025, 0.025
-                                                                   0, 1.5, 0"
+                                                                   0, 1.5, 0
                                                         
-                                                        TriangleIndices=" 0 1 2   3 4 5   6 7 8
-                                                                          9 10 11   12 13 14   15 16 17
-                                                                          18 19 20   21 22 23   24 25 26 "/>
+                                                                   -0.025, -0.025,  0.025
+                                                                   0.025, -0.025, -0.025
+                                                                   0, 1.5, 0 "
+                                                        
+                                                        TriangleIndices=" 0 1 2   3 4 5  "/>
 
                                     </GeometryModel3D.Geometry>
 
@@ -197,13 +240,10 @@
                                         <EmissiveMaterial Brush="Brown"/>
                                     </GeometryModel3D.BackMaterial>
 
-
                                     <GeometryModel3D.Material>
                                         <EmissiveMaterial Brush="Brown"/>
                                     </GeometryModel3D.Material>
-
                                 </GeometryModel3D>
-
 
                             </Model3DGroup>
 
@@ -214,42 +254,94 @@
 
 
 
-                    <!--<ModelVisual3D>
+                    <ModelVisual3D>
                         <ModelVisual3D.Content>
 
-                            <GeometryModel3D>
+                            <Model3DGroup>
 
-                                <GeometryModel3D.Geometry>
-                                    -->
-                    <!--x z y-->
-                    <!--
-                                    <MeshGeometry3D Positions="    
+
+                                <GeometryModel3D>
+                                    <GeometryModel3D.Geometry>
+                                        <!--x z y-->
+                                        <MeshGeometry3D Positions="    
                                                                    0, 0, 0
                                                                    -1.5, 0.1, 0
                                                                    0, -0.1, 0
+                                                                                 
+                                                                   0, -0.05, 0.05
+                                                                   -1.5, 0.1, 0
+                                                                   0, -0.05, -0.05"
+                                                        
+                                                        TriangleIndices=" 0 1 2   3 4 5  "/>
+
+                                    </GeometryModel3D.Geometry>
+
+                                    <GeometryModel3D.BackMaterial>
+                                        <EmissiveMaterial Brush="ForestGreen"/>
+                                    </GeometryModel3D.BackMaterial>
+
+                                    <GeometryModel3D.Material>
+                                        <EmissiveMaterial Brush="ForestGreen"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+
+
+                                <GeometryModel3D>
+                                    <GeometryModel3D.Geometry>
+                                        <!--x z y-->
+                                        <MeshGeometry3D Positions="    
+                                                                   
                                                                                    
                                                                    0, 0, 0
                                                                    0, -0.1, 0
                                                                    0, 0.1, 1.5
                                                     
+                                                               
+                                                                   0.05, -0.05, 0
+                                                                   -0.05, -0.05, 0
+                                                                   0, 0.1, 1.5 "
+                                                        
+                                                        TriangleIndices=" 0 1 2   3 4 5  "/>
+
+                                    </GeometryModel3D.Geometry>
+
+                                    <GeometryModel3D.BackMaterial>
+                                        <EmissiveMaterial Brush="Blue"/>
+                                    </GeometryModel3D.BackMaterial>
+
+                                    <GeometryModel3D.Material>
+                                        <EmissiveMaterial Brush="Blue"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+
+                                <GeometryModel3D>
+                                    <GeometryModel3D.Geometry>
+                                        <!--x z y-->
+                                        <MeshGeometry3D Positions="    
                                                                    -0.025, -0.025,  -0.025
                                                                    0.025, -0.025, 0.025
-                                                                   0, 1.5, 0"
+                                                                   0, 1.5, 0
                                                         
-                                                        TriangleIndices="0 1 2 3 4 5 6 7 8 "/>
+                                                                   -0.025, -0.025,  0.025
+                                                                   0.025, -0.025, -0.025
+                                                                   0, 1.5, 0 "
+                                                        
+                                                        TriangleIndices=" 0 1 2   3 4 5  "/>
 
-                                </GeometryModel3D.Geometry>
+                                    </GeometryModel3D.Geometry>
 
-                                <GeometryModel3D.Material>
+                                    <GeometryModel3D.BackMaterial>
+                                        <EmissiveMaterial Brush="Brown"/>
+                                    </GeometryModel3D.BackMaterial>
 
-                                    <DiffuseMaterial Brush="YellowGreen"/>
-
-                                </GeometryModel3D.Material>
-
-                            </GeometryModel3D>
+                                    <GeometryModel3D.Material>
+                                        <EmissiveMaterial Brush="Brown"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+                            </Model3DGroup>
                         </ModelVisual3D.Content>
 
-                    </ModelVisual3D>-->
+                    </ModelVisual3D>
 
 
 
@@ -257,6 +349,7 @@
 
                 </Viewport3D.Children>
             </Viewport3D>
+            <Button Content="+" BorderThickness="0" Background="#222222cc"  FontSize="20" Width="50" Height="50"/>
 
         </WrapPanel>
 
@@ -272,7 +365,7 @@
         </WrapPanel>
 
         <WrapPanel Background="LightGray" HorizontalAlignment="Stretch" Orientation="Horizontal" Grid.Column="2">
-            <StackPanel Background="Gray" x:Name="DropPanel" AllowDrop="True" Drop="DropPanel_Drop" Height="100" Width="200">
+            <StackPanel Background="Gray" x:Name="DropPanel" AllowDrop="True" Drop="DropPanel_Drop" Height="100" Width="196">
                 <Button BorderThickness="2" Background="Wheat" x:Name="OpenFileButton" Content="Открыть" Click="OpenFileButton_Click"/>
                 <Label HorizontalContentAlignment="Center" Content="Drop EBSD data here" />
             </StackPanel>
@@ -288,7 +381,7 @@
                         </ListBox.Resources>
                     </ListBox>
 
-                    <ListBox x:Name="ImagesSources" BorderThickness="0"  SelectionMode="Single" Width="110" ItemsSource="{Binding ImageList}">
+                    <ListBox x:Name="ImagesSources" BorderThickness="0"  SelectionMode="Single" Width="106" ItemsSource="{Binding ImageList}">
                         <ListBox.Resources>
                             <DataTemplate x:Key="data">
                                 <!--<Image Source="{Binding Converter={StaticResource imgConverter}}"/>-->

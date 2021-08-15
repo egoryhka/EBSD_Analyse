@@ -13,6 +13,7 @@ using System.Windows.Data;
 using System.IO;
 using System.Threading;
 using System.Windows.Media.Media3D;
+using System.Windows.Controls.Primitives;
 
 namespace WpfApp
 {
@@ -258,6 +259,10 @@ namespace WpfApp
                 cube_xRotation.Angle = pointOrientation.X;
                 cube_yRotation.Angle = pointOrientation.Y;
                 cube_zRotation.Angle = pointOrientation.Z;
+
+
+                EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, x, y);
+
             }
         }
 
@@ -279,17 +284,18 @@ namespace WpfApp
 
         double scale = 1.0;
         double minScale = 1;
-        double maxScale = 5.0;
+        double maxScale = 10.0;
 
-      
+
         private void EBSD_Image_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
         {
+           
             var position = e.MouseDevice.GetPosition(EBSD_Image);
 
             if (e.Delta > 0)
-                scale += 0.1;
+                scale += 0.5;
             else
-                scale -= 0.1;
+                scale -= 0.5;
 
             if (scale > maxScale)
                 scale = maxScale;
@@ -299,8 +305,6 @@ namespace WpfApp
             EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, position.X, position.Y);
 
         }
-
-
 
         #endregion Events
 
@@ -335,14 +339,9 @@ namespace WpfApp
 
 
 
-
-
-
-
-
         #endregion Helpers
 
-
+      
     }
 
 
