@@ -14,6 +14,7 @@ using System.IO;
 using System.Threading;
 using System.Windows.Media.Media3D;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 
 namespace WpfApp
 {
@@ -244,13 +245,33 @@ namespace WpfApp
             UpdateImage();
         }
 
+        System.Windows.Point lastPosition;
         private void EBSD_Image_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            System.Windows.Point newPosition = e.GetPosition(EBSD_Image);
+
+
+
+
+            if (MoveMode)
+            {
+                Vector direction = new Vector(0,0);
+              
+                if (e.LeftButton == MouseButtonState.Pressed)
+                {
+                    direction = lastPosition - e.GetPosition(this);
+                    EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, direction.X, direction.Y);
+                }
+               
+                return;
+            }
+
+
             BitmapSource bitmapSource = EBSD_Image.Source as BitmapSource;
             if (bitmapSource != null)
             {
-                int x = (int)e.GetPosition(EBSD_Image).X;
-                int y = (int)e.GetPosition(EBSD_Image).Y;
+                int x = (int)newPosition.X;
+                int y = (int)newPosition.Y;
 
                 xLable.Content = "X: " + x;
                 yLable.Content = "Y: " + y;
@@ -269,28 +290,26 @@ namespace WpfApp
                 EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, x, y);
 
             }
+
+
+
+
         }
 
         private void EBSD_Image_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            //BitmapSource bitmapSource = EBSD_Image.Source as BitmapSource;
-            //if (bitmapSource != null)
-            //{
-            //    int x = (int)e.GetPosition(EBSD_Image).X;
-            //    int y = (int)e.GetPosition(EBSD_Image).Y;
+            lastPosition = e.GetPosition(EBSD_Image);
 
-            //    Euler pointOrientation = analyzer.eulers[x + y * analyzer.width];
-            //    cube_xRotation.Angle = pointOrientation.X;
-            //    cube_yRotation.Angle = pointOrientation.Y;
-            //    cube_zRotation.Angle = pointOrientation.Z;
+            if (SelectMode)
+            {
 
-            //}
+
+            }
         }
 
         double scale = 1.0;
         double minScale = 1;
         double maxScale = 10.0;
-
 
         private void IncreaseImageSizeButton_Click(object sender, RoutedEventArgs e)
         {
@@ -298,13 +317,13 @@ namespace WpfApp
             int y = (int)EBSD_Image.RenderSize.Height / 2;
 
 
-            scale += 0.5;
-
+            scale += 0.25;
 
 
             if (scale > maxScale)
                 scale = maxScale;
 
+            ImageSizeLabel.Content = "Size: " + 100 * scale / 1 + "%";
 
             EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, x, y);
         }
@@ -315,14 +334,35 @@ namespace WpfApp
             int y = (int)EBSD_Image.RenderSize.Height / 2;
 
 
-            scale -= 0.5;
+            scale -= 0.25;
+
 
             if (scale < minScale)
                 scale = minScale;
 
+            ImageSizeLabel.Content = "Size: " + 100 * scale / 1 + "%";
+
             EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, x, y);
         }
 
+        bool MoveMode = false;
+        bool SelectMode = true;
+
+        private void MoveModeButton_Click(object sender, RoutedEventArgs e)
+        {
+            EBSD_Image.Cursor = Cursors.Hand;
+            MoveMode = true;
+            SelectMode = false;
+        }
+
+        private void SelectModeButton_Click(object sender, RoutedEventArgs e)
+        {
+            EBSD_Image.Cursor = Cursors.Arrow;
+            MoveMode = false;
+            SelectMode = true;
+        }
+
+     
         #endregion Events
 
         // Helpers
@@ -357,9 +397,11 @@ namespace WpfApp
 
 
 
+
+
         #endregion Helpers
 
-
+ 
     }
 
 

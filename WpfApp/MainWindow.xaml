@@ -17,17 +17,20 @@
 
                     <StackPanel Background="LightGray" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,9,10,10">
                         <ScrollViewer x:Name="scroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" CanContentScroll="True" MaxHeight="400" MaxWidth="400">
-                            <Image x:Name="EBSD_Image" RenderOptions.BitmapScalingMode="NearestNeighbor" SnapsToDevicePixels="True" MouseMove="EBSD_Image_MouseMove" MouseLeftButtonDown="EBSD_Image_MouseLeftButtonDown" />
+                            <Image x:Name="EBSD_Image" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseMove="EBSD_Image_MouseMove" MouseLeftButtonDown="EBSD_Image_MouseLeftButtonDown" />
                         </ScrollViewer>
                     </StackPanel>
-                    <Label x:Name="yLable" BorderBrush="Black" BorderThickness="0.2" Background="LightGray" Content="Y:" Height="30" Width="80"/>
-                    <Label x:Name="xLable" BorderBrush="Black" BorderThickness="0.2" Background="LightGray" Content="X:" Height="30" Width="80"/>
+                    <Label VerticalContentAlignment="Center" x:Name="yLable" BorderBrush="Black" BorderThickness="0.2" Background="LightGray" Content="Y:" Margin="5,0,0,0" Height="30" Width="80"/>
+                    <Label VerticalContentAlignment="Center" x:Name="xLable" BorderBrush="Black" BorderThickness="0.2" Background="LightGray" Content="X:" Margin="2.5,0,0,0" Height="30" Width="80"/>
 
-                    <Label x:Name="ImageSizeLabel" BorderBrush="Black" BorderThickness="0.2" Background="DarkGray" Content="Size:" Height="30" Width="80" Margin="5,0,0,0"  />
+                    <Label VerticalContentAlignment="Center" x:Name="ImageSizeLabel" BorderBrush="Black" BorderThickness="0.2" Background="DarkGray" Content="Size: 100%" Height="30" Width="80" Margin="5,0,0,0"  />
 
                     <Button x:Name="IncreaseImageSizeButton" Content="+" BorderThickness="0.2" Background="DarkGray"  FontSize="20" Height="30" Width="30" Margin="5,0,0,0" Click="IncreaseImageSizeButton_Click" />
                     <Button x:Name="DecreaseImageSizeButton" Content="-" BorderThickness="0.2" Background="DarkGray"  FontSize="20" Height="30" Width="30" Margin="5,0,0,0"  Click="DecreaseImageSizeButton_Click" />
-                   
+
+                    <Button x:Name="MoveModeButton" Content="🖑" Foreground="White" BorderThickness="0.2" Background="DarkGray"  FontSize="25" Height="30" Width="30" Margin="5,0,0,0" Click="MoveModeButton_Click" />
+                    <Button x:Name="SelectModeButton" Content="↖" Foreground="White" BorderThickness="0.2" Background="DarkGray"  FontSize="25" Height="30" Width="30" Margin="5,0,0,0" Click="SelectModeButton_Click" />
+
                     <Viewport3D Width="100" Height="100">
 
                         <Viewport3D.Camera>
@@ -348,9 +351,10 @@
 
                         </Viewport3D.Children>
                     </Viewport3D>
-                    
-                </WrapPanel>
 
+
+                </WrapPanel>
+            
             </Grid>
 
             <Grid Background="DarkGray" Width="350" Height="600">
