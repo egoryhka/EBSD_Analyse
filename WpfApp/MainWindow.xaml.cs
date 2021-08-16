@@ -173,14 +173,17 @@ namespace WpfApp
         private void OpenEbsdFile(string path)
         {
             if (string.IsNullOrEmpty(path)) return; // Bad Path...
+            try
+            {
+                BackgroundWorker worker = new BackgroundWorker();
+                worker.WorkerReportsProgress = true;
+                worker.DoWork += ReadEBSDExcel;
+                worker.ProgressChanged += OnWorkProgressChanged;
+                worker.RunWorkerCompleted += OnWorkComplete;
 
-            BackgroundWorker worker = new BackgroundWorker();
-            worker.WorkerReportsProgress = true;
-            worker.DoWork += ReadEBSDExcel;
-            worker.ProgressChanged += OnWorkProgressChanged;
-            worker.RunWorkerCompleted += OnWorkComplete;
-
-            worker.RunWorkerAsync(new ExcelPackage(new System.IO.FileInfo(path)));
+                worker.RunWorkerAsync(new ExcelPackage(new System.IO.FileInfo(path)));
+            }
+            catch (Exception ex) { MessageBox.Show($"Ошибка чтения файла! \n {ex.ToString()}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error); }
         }
 
         private void UpdateImage()
@@ -198,6 +201,7 @@ namespace WpfApp
 
             bmp.Save("Ebsd_Image");
         }
+
         #endregion Processing
 
         // Processing_Events
@@ -245,27 +249,9 @@ namespace WpfApp
             UpdateImage();
         }
 
-        System.Windows.Point lastPosition;
         private void EBSD_Image_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
             System.Windows.Point newPosition = e.GetPosition(EBSD_Image);
-
-
-
-
-            if (MoveMode)
-            {
-                Vector direction = new Vector(0,0);
-              
-                if (e.LeftButton == MouseButtonState.Pressed)
-                {
-                    direction = lastPosition - e.GetPosition(this);
-                    EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, direction.X, direction.Y);
-                }
-               
-                return;
-            }
-
 
             BitmapSource bitmapSource = EBSD_Image.Source as BitmapSource;
             if (bitmapSource != null)
@@ -284,85 +270,61 @@ namespace WpfApp
                     cube_yRotation.Angle = pointOrientation.Y;
                     cube_zRotation.Angle = pointOrientation.Z;
                 }
-
-
-
-                EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, x, y);
-
             }
-
-
-
-
         }
 
-        private void EBSD_Image_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        bool increase = false;
+        double scale = 1.03125d;
+        double ZoomFactor = 1;
+        double minZoom = 1;
+        double maxZoom = 10;
+        private void EBSD_Image_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
         {
-            lastPosition = e.GetPosition(EBSD_Image);
+            e.Handled = true;
 
-            if (SelectMode)
+
+            ZoomFactor = ImageZoomTransform.ScaleX;
+            if (e.Delta < 0)
             {
-
-
+                increase = false;
+                ZoomFactor /= scale;
             }
+            else
+            {
+                increase = true;
+                ZoomFactor *= scale;
+            }
+            ZoomFactor = Math.Clamp(ZoomFactor, minZoom, maxZoom);
+
+            Zoom(ZoomFactor);
         }
 
-        double scale = 1.0;
-        double minScale = 1;
-        double maxScale = 10.0;
-
-        private void IncreaseImageSizeButton_Click(object sender, RoutedEventArgs e)
+        private void Zoom(double zoom)
         {
-            int x = (int)EBSD_Image.RenderSize.Width / 2;
-            int y = (int)EBSD_Image.RenderSize.Height / 2;
+            ImageZoomTransform.ScaleX = zoom;
+            ImageZoomTransform.ScaleY = zoom;
 
-
-            scale += 0.25;
-
-
-            if (scale > maxScale)
-                scale = maxScale;
-
-            ImageSizeLabel.Content = "Size: " + 100 * scale / 1 + "%";
-
-            EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, x, y);
+            AdjustScroll();
         }
 
-        private void DecreaseImageSizeButton_Click(object sender, RoutedEventArgs e)
+
+        private void AdjustScroll()
         {
-            int x = (int)EBSD_Image.RenderSize.Width / 2;
-            int y = (int)EBSD_Image.RenderSize.Height / 2;
 
+            if (increase)
+            {
+                scroll.ScrollToHorizontalOffset((scroll.HorizontalOffset) * scale);
+                scroll.ScrollToVerticalOffset((scroll.VerticalOffset) * scale);
+            }
+            else
+            {
+                scroll.ScrollToHorizontalOffset((scroll.HorizontalOffset) / scale);
+                scroll.ScrollToVerticalOffset((scroll.VerticalOffset) / scale);
+            }
 
-            scale -= 0.25;
-
-
-            if (scale < minScale)
-                scale = minScale;
-
-            ImageSizeLabel.Content = "Size: " + 100 * scale / 1 + "%";
-
-            EBSD_Image.RenderTransform = new ScaleTransform(scale, scale, x, y);
         }
 
-        bool MoveMode = false;
-        bool SelectMode = true;
 
-        private void MoveModeButton_Click(object sender, RoutedEventArgs e)
-        {
-            EBSD_Image.Cursor = Cursors.Hand;
-            MoveMode = true;
-            SelectMode = false;
-        }
-
-        private void SelectModeButton_Click(object sender, RoutedEventArgs e)
-        {
-            EBSD_Image.Cursor = Cursors.Arrow;
-            MoveMode = false;
-            SelectMode = true;
-        }
-
-     
         #endregion Events
 
         // Helpers
@@ -399,9 +361,10 @@ namespace WpfApp
 
 
 
+
         #endregion Helpers
 
- 
+
     }
 
 

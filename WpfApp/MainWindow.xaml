@@ -15,21 +15,23 @@
             <Grid Background="Gray" Width="420" Height="600">
                 <WrapPanel Orientation="Horizontal">
 
-                    <StackPanel Background="LightGray" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,9,10,10">
-                        <ScrollViewer x:Name="scroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" CanContentScroll="True" MaxHeight="400" MaxWidth="400">
-                            <Image x:Name="EBSD_Image" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseMove="EBSD_Image_MouseMove" MouseLeftButtonDown="EBSD_Image_MouseLeftButtonDown" />
-                        </ScrollViewer>
-                    </StackPanel>
+                    <ScrollViewer x:Name="scroll" Margin="10,9,10,10" Background="LightGray" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" CanContentScroll="True" MaxHeight="400" MaxWidth="400">
+                        <Image x:Name="EBSD_Image" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseWheel="EBSD_Image_MouseWheel" MouseMove="EBSD_Image_MouseMove" >
+                            <Image.LayoutTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="ImageZoomTransform" ScaleX="1" ScaleY="1"></ScaleTransform>
+                                </TransformGroup>
+                            </Image.LayoutTransform>
+                        </Image>
+                    </ScrollViewer>
+
                     <Label VerticalContentAlignment="Center" x:Name="yLable" BorderBrush="Black" BorderThickness="0.2" Background="LightGray" Content="Y:" Margin="5,0,0,0" Height="30" Width="80"/>
                     <Label VerticalContentAlignment="Center" x:Name="xLable" BorderBrush="Black" BorderThickness="0.2" Background="LightGray" Content="X:" Margin="2.5,0,0,0" Height="30" Width="80"/>
 
                     <Label VerticalContentAlignment="Center" x:Name="ImageSizeLabel" BorderBrush="Black" BorderThickness="0.2" Background="DarkGray" Content="Size: 100%" Height="30" Width="80" Margin="5,0,0,0"  />
 
-                    <Button x:Name="IncreaseImageSizeButton" Content="+" BorderThickness="0.2" Background="DarkGray"  FontSize="20" Height="30" Width="30" Margin="5,0,0,0" Click="IncreaseImageSizeButton_Click" />
-                    <Button x:Name="DecreaseImageSizeButton" Content="-" BorderThickness="0.2" Background="DarkGray"  FontSize="20" Height="30" Width="30" Margin="5,0,0,0"  Click="DecreaseImageSizeButton_Click" />
-
-                    <Button x:Name="MoveModeButton" Content="🖑" Foreground="White" BorderThickness="0.2" Background="DarkGray"  FontSize="25" Height="30" Width="30" Margin="5,0,0,0" Click="MoveModeButton_Click" />
-                    <Button x:Name="SelectModeButton" Content="↖" Foreground="White" BorderThickness="0.2" Background="DarkGray"  FontSize="25" Height="30" Width="30" Margin="5,0,0,0" Click="SelectModeButton_Click" />
+                    <!--<Button x:Name="IncreaseImageSizeButton" Content="+" BorderThickness="0.2" Background="DarkGray"  FontSize="20" Height="30" Width="30" Margin="5,0,0,0" Click="IncreaseImageSizeButton_Click" />
+                    <Button x:Name="DecreaseImageSizeButton" Content="-" BorderThickness="0.2" Background="DarkGray"  FontSize="20" Height="30" Width="30" Margin="5,0,0,0"  Click="DecreaseImageSizeButton_Click" />-->
 
                     <Viewport3D Width="100" Height="100">
 
@@ -354,7 +356,7 @@
 
 
                 </WrapPanel>
-            
+
             </Grid>
 
             <Grid Background="DarkGray" Width="350" Height="600">
