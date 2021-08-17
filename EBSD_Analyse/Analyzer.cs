@@ -228,6 +228,134 @@ namespace EBSD_Analyse
             catch { }
         }
 
+        public byte[] GetColorMap(MapVariants mapVariant)
+        {
+            ComputeKernel kernel = null;
+
+            // Инициализация новой программы
+            try
+            {
+                switch (mapVariant)
+                {
+                    case MapVariants.BC: kernel = Program.CreateKernel("Bc2Color"); break;
+                    case MapVariants.Euler: kernel = Program.CreateKernel("Euler2Color"); break;
+                }
+            }
+            catch { }
+
+            if (kernel == null) return null;
+
+            // Создание програмной очереди.
+            ComputeCommandQueue Queue = new ComputeCommandQueue(Context, Cloo.ComputePlatform.Platforms[0].Devices[0], Cloo.ComputeCommandQueueFlags.None);
+
+            // Инициализация выходного буффера и массива
+            ComputeBuffer<byte> colorsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, Data.Width * Data.Height * 4);
+
+            // Установка параметров для расчетов
+            kernel.SetMemoryArgument(0, colorsBuffer);
+            kernel.SetValueArgument<int>(1, Data.Width);
+            kernel.SetValueArgument<int>(2, Data.Height);
+
+            List<ComputeMemory> memoryList = new List<ComputeMemory>();
+
+            int i = 3;
+            foreach (var obj in GetKernelArguments(mapVariant))
+            {
+                if (obj as ComputeMemory != null)
+                {
+                    ComputeMemory memory = obj as ComputeMemory;
+                    kernel.SetMemoryArgument(i, memory);
+                    memoryList.Add(memory);
+                }
+                else
+                {
+                    kernel.SetValueArgument<int>(i, (int)obj);
+                }
+                i++;
+            }
+
+            // Запуск 
+            Queue.Execute(kernel, null, new long[] { Data.Width, Data.Height }, null, null);
+
+            // Считывание результата
+            byte[] colors = new byte[Data.Width * Data.Height * 4]; // output
+
+            Queue.ReadFromBuffer(colorsBuffer, ref colors, true, null);
+
+            colorsBuffer.Dispose();
+
+            foreach (var mem in memoryList)
+            {
+                if (mem != null) mem.Dispose();
+            }
+
+            kernel.Dispose();
+            Queue.Dispose();
+
+            return colors;
+        }
+
+        public void Extrapolate(int iterations)
+        {
+            ComputeKernel kernel = null;
+
+            // Инициализация новой программы
+            try
+            {
+                kernel = Program.CreateKernel("Extrapolate");
+            }
+            catch { }
+
+            if (kernel == null) return;
+
+            // Создание програмной очереди.
+            ComputeCommandQueue Queue = new ComputeCommandQueue(Context, Cloo.ComputePlatform.Platforms[0].Devices[0], Cloo.ComputeCommandQueueFlags.None);
+
+            // Инициализация буфферов
+            ComputeBuffer<Euler> inputBuffer;
+            ComputeBuffer<Euler> outputBuffer;
+
+            inputBuffer = new ComputeBuffer<Euler>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, Data.Eulers);
+            outputBuffer = new ComputeBuffer<Euler>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, new Euler[Data.Eulers.Length]);
+
+            // Установка параметров для расчетов
+            kernel.SetMemoryArgument(0, outputBuffer);
+            kernel.SetValueArgument<int>(1, Data.Width);
+            kernel.SetValueArgument<int>(2, Data.Height);
+            kernel.SetMemoryArgument(3, inputBuffer);
+
+            // Первый (обязательный) Запуск 
+            Queue.Execute(kernel, null, new long[] { Data.Eulers.Length }, null, null);
+
+            // Перенос выхода на вход
+            Queue.CopyBuffer(outputBuffer, inputBuffer, null);
+
+            for (int i = 0; i < iterations - 1; i++)
+            {
+                // Запуск 
+                Queue.Execute(kernel, null, new long[] { Data.Eulers.Length }, null, null);
+                Queue.CopyBuffer(outputBuffer, inputBuffer, null);
+            }
+
+
+            // Считывание результата
+            Euler[] res = new Euler[Data.Eulers.Length];
+            Queue.ReadFromBuffer(outputBuffer, ref res, true, null);
+
+            Data.Eulers = res;
+
+            inputBuffer.Dispose();
+            outputBuffer.Dispose();
+            kernel.Dispose();
+            Queue.Dispose();
+        }
+
+        public void DefineGrains()
+        {
+           bool[] GrainMask = GetGrainMask();
+
+        }
+
         private object[] GetKernelArguments(MapVariants mapVariant)
         {
             switch (mapVariant)
@@ -273,21 +401,14 @@ namespace EBSD_Analyse
             }
         }
 
-        public void Extrapolate(int iterations)
-        {
-            Euler[] euls = Data.Eulers;
-
-            Data.Eulers = Extrapolate(euls, iterations);
-        }
-
-        private Euler[] Extrapolate(Euler[] _eulers, int iterations)
+        private bool[] GetGrainMask()
         {
             ComputeKernel kernel = null;
 
             // Инициализация новой программы
             try
             {
-                kernel = Program.CreateKernel("Extrapolate");
+                kernel = Program.CreateKernel("GetGrainMask");
             }
             catch { }
 
@@ -297,73 +418,29 @@ namespace EBSD_Analyse
             ComputeCommandQueue Queue = new ComputeCommandQueue(Context, Cloo.ComputePlatform.Platforms[0].Devices[0], Cloo.ComputeCommandQueueFlags.None);
 
             // Инициализация буфферов
-            ComputeBuffer<Euler> inputBuffer;
-            ComputeBuffer<Euler> outputBuffer;
+            //ComputeBuffer<Euler> inputBuffer;
+            ComputeBuffer<bool> outputBuffer;
 
-            inputBuffer = new ComputeBuffer<Euler>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, _eulers);
-            outputBuffer = new ComputeBuffer<Euler>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, new Euler[_eulers.Length]);
+            //inputBuffer = new ComputeBuffer<Euler>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, Data.Eulers);
+            outputBuffer = new ComputeBuffer<bool>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, new bool[Data.Eulers.Length]);
 
             // Установка параметров для расчетов
             kernel.SetMemoryArgument(0, outputBuffer);
             kernel.SetValueArgument<int>(1, Data.Width);
             kernel.SetValueArgument<int>(2, Data.Height);
-            kernel.SetMemoryArgument(3, inputBuffer);
+            //kernel.SetMemoryArgument(3, inputBuffer);
 
-            // Первый (обязательный) Запуск 
-            Queue.Execute(kernel, null, new long[] { _eulers.Length }, null, null);
-
-            // Перенос выхода на вход
-            Queue.CopyBuffer(outputBuffer, inputBuffer, null);
-
-            for (int i = 0; i < iterations - 1; i++)
-            {
-                // Запуск 
-                Queue.Execute(kernel, null, new long[] { _eulers.Length }, null, null);
-                Queue.CopyBuffer(outputBuffer, inputBuffer, null);
-            }
-
-
-            // Считывание результата
-            Euler[] res = new Euler[_eulers.Length];
-            Queue.ReadFromBuffer(outputBuffer, ref res, true, null);
-
-            return res;
-        }
-
-        public byte[] GetColorMap(MapVariants mapVariant)
-        {
-            ComputeKernel kernel = null;
-
-            // Инициализация новой программы
-            try
-            {
-                switch (mapVariant)
-                {
-                    case MapVariants.BC: kernel = Program.CreateKernel("Bc2Color"); break;
-                    case MapVariants.Euler: kernel = Program.CreateKernel("Euler2Color"); break;
-                }
-            }
-            catch { }
-
-            if (kernel == null) return null;
-
-            // Создание програмной очереди.
-            ComputeCommandQueue Queue = new ComputeCommandQueue(Context, Cloo.ComputePlatform.Platforms[0].Devices[0], Cloo.ComputeCommandQueueFlags.None);
-
-            // Инициализация выходного буффера и массива
-            ComputeBuffer<byte> colorsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, Data.Width * Data.Height * 4);
-
-            // Установка параметров для расчетов
-            kernel.SetMemoryArgument(0, colorsBuffer);
-            kernel.SetValueArgument<int>(1, Data.Width);
-            kernel.SetValueArgument<int>(2, Data.Height);
-
+            List<ComputeMemory> memoryList = new List<ComputeMemory>();
 
             int i = 3;
-            foreach (var obj in GetKernelArguments(mapVariant))
+            foreach (var obj in GetKernelArguments(MapVariants.Euler))
             {
                 if (obj as ComputeMemory != null)
-                    kernel.SetMemoryArgument(i, obj as ComputeMemory);
+                {
+                    ComputeMemory memory = obj as ComputeMemory;
+                    kernel.SetMemoryArgument(i, memory);
+                    memoryList.Add(memory);
+                }
                 else
                 {
                     kernel.SetValueArgument<int>(i, (int)obj);
@@ -372,15 +449,25 @@ namespace EBSD_Analyse
             }
 
             // Запуск 
-            Queue.Execute(kernel, null, new long[] { Data.Width, Data.Height }, null, null);
+            Queue.Execute(kernel, null, new long[] { Data.Width, Data.Height}, null, null);
 
             // Считывание результата
-            byte[] colors = new byte[Data.Width * Data.Height * 4]; // output
+            bool[] res = new bool[Data.Eulers.Length];
+            Queue.ReadFromBuffer(outputBuffer, ref res, true, null);
 
-            Queue.ReadFromBuffer(colorsBuffer, ref colors, true, null);
+            outputBuffer.Dispose();
 
-            return colors;
+            foreach (var mem in memoryList)
+            {
+                if (mem != null) mem.Dispose();
+            }
+
+            kernel.Dispose();
+            Queue.Dispose();
+
+            return res;
         }
+
 
     }
 

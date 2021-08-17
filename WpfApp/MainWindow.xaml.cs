@@ -294,7 +294,9 @@ namespace WpfApp
                 increase = true;
                 ZoomFactor *= scale;
             }
+
             ZoomFactor = Math.Clamp(ZoomFactor, minZoom, maxZoom);
+            ImageSizeLabel.Content = "Size: " + Math.Round(ZoomFactor * 100, 0) + "%";
 
             Zoom(ZoomFactor);
         }
@@ -323,7 +325,10 @@ namespace WpfApp
             }
 
         }
-
+        private void GrainsDefineButton_Click(object sender, RoutedEventArgs e)
+        {
+            analyzer.DefineGrains();
+        }
 
         #endregion Events
 
@@ -362,9 +367,10 @@ namespace WpfApp
 
 
 
+
         #endregion Helpers
 
-
+        
     }
 
 

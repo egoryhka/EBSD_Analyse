@@ -365,8 +365,9 @@
 
                 <Label  Content="Итераций:" Margin="6,49,270,526" Height="25"/>
                 <Label  Content="{Binding Value, ElementName=ExtrapolateSlider}" HorizontalContentAlignment="Center" Width="25" Margin="80,49,245,526" Height="25"/>
-                <Slider HorizontalAlignment="Left" x:Name="ExtrapolateSlider" Value="5" Minimum="0" Maximum="10" IsSnapToTickEnabled="True" TickFrequency="1" Margin="105,49,0,0" TickPlacement="TopLeft" VerticalAlignment="Top" Width="120" Height="25" />
+                <Slider HorizontalAlignment="Left" x:Name="ExtrapolateSlider" Value="5" Minimum="1" Maximum="10" IsSnapToTickEnabled="True" TickFrequency="1" Margin="105,49,0,0" TickPlacement="TopLeft" VerticalAlignment="Top" Width="120" Height="25" />
                 <Button Content="Экстраполяция" x:Name="ExtrapolateButton" Height="25" Click="ExtrapolateButton_Click" Margin="230,49,25,526"/>
+                <Button x:Name="GrainsDefineButton" Content="Определить зёрна" HorizontalAlignment="Center" Margin="0,104,0,0" Height="25" VerticalAlignment="Top" Click="GrainsDefineButton_Click"/>
 
             </Grid>
 
