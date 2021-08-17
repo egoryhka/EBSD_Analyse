@@ -7,43 +7,48 @@ using System.Runtime.InteropServices;
 
 namespace EBSD_Analyse
 {
+    public struct Analyzer_Data
+    {
+        public EBSD_Point[,] Ebsd_points;
+        public Euler[] Eulers;
+        public int[] BCs;
+        public int Width;
+        public int Height;
+
+        public Analyzer_Data(EBSD_Point[,] ebsd_points)
+        {
+            Ebsd_points = ebsd_points;
+
+            Width = ebsd_points.GetLength(0);
+            Height = ebsd_points.GetLength(1);
+
+            Eulers = new Euler[Width * Height];
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    Eulers[x + y * Width] = ebsd_points[x, y].Euler;
+                }
+            }
+            //eulers = value.Cast<EBSD_Point>().Select(x => x.Euler).ToArray();
+
+            BCs = new int[Width * Height];
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    BCs[x + y * Width] = ebsd_points[x, y].BC;
+                }
+            }
+            //bcs = value.Cast<EBSD_Point>().Select(x => x.BC).ToArray();
+
+        }
+    }
+
+
     public class Analyzer
     {
-        public Euler[] eulers;
-
-        public EBSD_Point[,] Ebsd_points
-        {
-            get { return ebsd_points; }
-            set
-            {
-                ebsd_points = value;
-                eulers = new Euler[width * height];
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        eulers[x + y * width] = value[x, y].Euler;
-                    }
-                }
-                //eulers = value.Cast<EBSD_Point>().Select(x => x.Euler).ToArray();
-
-                bcs = new int[width * height];
-                for (int y = 0; y < height; y++)
-                {
-                    for (int x = 0; x < width; x++)
-                    {
-                        bcs[x + y * width] = value[x, y].BC;
-                    }
-                }
-                //bcs = value.Cast<EBSD_Point>().Select(x => x.BC).ToArray();
-
-            }
-        }
-        private EBSD_Point[,] ebsd_points;
-        private int[] bcs;
-
-        public int width => Ebsd_points.GetLength(0);
-        public int height => Ebsd_points.GetLength(1);
+        public Analyzer_Data Data;
 
         private ComputeContext Context;
         private ComputeProgram Program;
@@ -180,6 +185,32 @@ namespace EBSD_Analyse
                      
                      
                  }
+
+             //------------------------------------------------------------
+
+                 __kernel void GetGrainMask(__global char* out, int width, int height,
+                 __read_only image2d_t in)
+                 {
+                     const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
+                                           CLK_ADDRESS_CLAMP | //Clamp to zeros
+                                           CLK_FILTER_NEAREST; //Don't interpolate
+
+                     int x = get_global_id(0);
+                     int y = get_global_id(1);
+
+                     int2 coord = (int2)(x, y); 
+                     int4 BC = read_imagei (in, smp, coord);
+
+                     int4 col = (int4)(BC.x,BC.x,BC.x,0);
+
+                     int linearId = (int)((x + y * width) * 4);
+
+                     out[linearId] = col.x; // R
+                     out[linearId+1] = col.y; // G
+                     out[linearId+2] = col.z; // B
+                     out[linearId+3] = 255; // A
+
+                 }
         
              //------------------------------------------------------------
                             ";
@@ -207,10 +238,10 @@ namespace EBSD_Analyse
 
                         unsafe
                         {
-                            fixed (int* imgPtr = bcs)
+                            fixed (int* imgPtr = Data.BCs)
                             {
                                 ComputeImageFormat inputFormat = new ComputeImageFormat(ComputeImageChannelOrder.R, ComputeImageChannelType.SignedInt32);
-                                bcImg = new ComputeImage2D(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, inputFormat, width, height, width * 1 * sizeof(int), (IntPtr)imgPtr);
+                                bcImg = new ComputeImage2D(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, inputFormat, Data.Width, Data.Height, Data.Width * 1 * sizeof(int), (IntPtr)imgPtr);
                             }
                         }
                         return new object[] { bcImg };
@@ -218,14 +249,14 @@ namespace EBSD_Analyse
                 case MapVariants.Euler:
                     {
                         ComputeImage2D pointsImg;
-                        float[] points = new float[4 * eulers.Length]; // input
+                        float[] points = new float[4 * Data.Eulers.Length]; // input
 
                         int k = 0;
                         for (int i = 0; i < points.Length - 3; i += 4)
                         {
-                            points[i] = eulers[k].X;
-                            points[i + 1] = eulers[k].Y;
-                            points[i + 2] = eulers[k].Z;
+                            points[i] = Data.Eulers[k].X;
+                            points[i + 1] = Data.Eulers[k].Y;
+                            points[i + 2] = Data.Eulers[k].Z;
                             k++;
                         }
                         unsafe
@@ -233,7 +264,7 @@ namespace EBSD_Analyse
                             fixed (float* imgPtr = points)
                             {
                                 ComputeImageFormat inputFormat = new ComputeImageFormat(ComputeImageChannelOrder.Rgba, ComputeImageChannelType.Float);
-                                pointsImg = new ComputeImage2D(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, inputFormat, width, height, width * 4 * sizeof(float), (IntPtr)imgPtr);
+                                pointsImg = new ComputeImage2D(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, inputFormat, Data.Width, Data.Height, Data.Width * 4 * sizeof(float), (IntPtr)imgPtr);
                             }
                         }
                         return new object[] { pointsImg };
@@ -244,12 +275,12 @@ namespace EBSD_Analyse
 
         public void Extrapolate(int iterations)
         {
-            Euler[] euls = eulers;
+            Euler[] euls = Data.Eulers;
             for (int i = 0; i < iterations; i++)
             {
                 euls = Extrapolate(euls);
             }
-            eulers = euls;
+            Data.Eulers = euls;
         }
 
         private Euler[] Extrapolate(Euler[] _eulers)
@@ -277,8 +308,8 @@ namespace EBSD_Analyse
 
             // Установка параметров для расчетов
             kernel.SetMemoryArgument(0, outputBuffer);
-            kernel.SetValueArgument<int>(1, width);
-            kernel.SetValueArgument<int>(2, height);
+            kernel.SetValueArgument<int>(1, Data.Width);
+            kernel.SetValueArgument<int>(2, Data.Height);
             kernel.SetMemoryArgument(3, inputBuffer);
 
             // Запуск 
@@ -312,12 +343,12 @@ namespace EBSD_Analyse
             ComputeCommandQueue Queue = new ComputeCommandQueue(Context, Cloo.ComputePlatform.Platforms[0].Devices[0], Cloo.ComputeCommandQueueFlags.None);
 
             // Инициализация выходного буффера и массива
-            ComputeBuffer<byte> colorsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, width * height * 4);
+            ComputeBuffer<byte> colorsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, Data.Width * Data.Height * 4);
 
             // Установка параметров для расчетов
             kernel.SetMemoryArgument(0, colorsBuffer);
-            kernel.SetValueArgument<int>(1, width);
-            kernel.SetValueArgument<int>(2, height);
+            kernel.SetValueArgument<int>(1, Data.Width);
+            kernel.SetValueArgument<int>(2, Data.Height);
 
 
             int i = 3;
@@ -333,10 +364,10 @@ namespace EBSD_Analyse
             }
 
             // Запуск 
-            Queue.Execute(kernel, null, new long[] { width, height }, null, null);
+            Queue.Execute(kernel, null, new long[] { Data.Width, Data.Height }, null, null);
 
             // Считывание результата
-            byte[] colors = new byte[width * height * 4]; // output
+            byte[] colors = new byte[Data.Width * Data.Height * 4]; // output
 
             Queue.ReadFromBuffer(colorsBuffer, ref colors, true, null);
 

@@ -52,7 +52,7 @@ namespace WpfApp
             InitializeComponent();
 
             if (File.Exists("Файл.ebsd"))
-                analyzer = FromJson("Файл.ebsd");
+                analyzer.Data = FromJson("Файл.ebsd");
 
 
             MapVariantChoose.ItemsSource = Enum.GetValues(typeof(MapVariants)).Cast<MapVariants>();
@@ -151,19 +151,19 @@ namespace WpfApp
 
         // Save
         #region File_Saving
-        private void ToJson(Analyzer analyzer, string path)
+        private void ToJson(Analyzer_Data data, string path)
         {
-            string json = JsonConvert.SerializeObject(analyzer);
+            string json = JsonConvert.SerializeObject(data);
             using (System.IO.StreamWriter sw = new System.IO.StreamWriter(path))
             { sw.Write(json); }
         }
-        private Analyzer FromJson(string path)
+        private Analyzer_Data FromJson(string path)
         {
             string json;
 
             using (System.IO.StreamReader sr = new System.IO.StreamReader(path))
             { json = sr.ReadToEnd(); }
-            return JsonConvert.DeserializeObject<Analyzer>(json);
+            return JsonConvert.DeserializeObject<Analyzer_Data>(json);
         }
 
         #endregion File_Saving
@@ -188,10 +188,10 @@ namespace WpfApp
 
         private void UpdateImage()
         {
-            if (analyzer.Ebsd_points == null) return; // No data
+            if (analyzer.Data.Ebsd_points == null) return; // No data
 
-            int width = analyzer.width;
-            int height = analyzer.height;
+            int width = analyzer.Data.Width;
+            int height = analyzer.Data.Height;
 
             var colors = analyzer.GetColorMap((MapVariants)MapVariantChoose.SelectedItem); // gpu work 
 
@@ -225,10 +225,10 @@ namespace WpfApp
         {
             if (e.Result != null)
             {
-                analyzer.Ebsd_points = (EBSD_Point[,])e.Result;
+                analyzer.Data = new Analyzer_Data((EBSD_Point[,])e.Result);
 
                 //               Имя текущего открытого файла
-                ToJson(analyzer, /*Title +*/ "Файл.ebsd");
+                ToJson(analyzer.Data, /*Title +*/ "Файл.ebsd");
                 UpdateImage();
             }
         }
@@ -243,7 +243,7 @@ namespace WpfApp
 
         private void ExtrapolateButton_Click(object sender, RoutedEventArgs e)
         {
-            if (analyzer.Ebsd_points == null || analyzer == null) { MessageBox.Show("Не с чем работать"); return; }
+            if (analyzer.Data.Ebsd_points == null || analyzer == null) { MessageBox.Show("Не с чем работать"); return; }
             analyzer.Extrapolate((int)ExtrapolateSlider.Value);
 
             UpdateImage();
@@ -262,9 +262,9 @@ namespace WpfApp
                 xLable.Content = "X: " + x;
                 yLable.Content = "Y: " + y;
 
-                if (x <= analyzer.width - 1 && x >= 0 && y <= analyzer.height - 1 && y >= 0)
+                if (x <= analyzer.Data.Width - 1 && x >= 0 && y <= analyzer.Data.Height - 1 && y >= 0)
                 {
-                    Euler pointOrientation = analyzer.eulers[x + y * analyzer.width];
+                    Euler pointOrientation = analyzer.Data.Eulers[x + y * analyzer.Data.Width];
 
                     cube_xRotation.Angle = pointOrientation.X;
                     cube_yRotation.Angle = pointOrientation.Y;
