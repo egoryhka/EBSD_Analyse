@@ -276,14 +276,11 @@ namespace EBSD_Analyse
         public void Extrapolate(int iterations)
         {
             Euler[] euls = Data.Eulers;
-            for (int i = 0; i < iterations; i++)
-            {
-                euls = Extrapolate(euls);
-            }
-            Data.Eulers = euls;
+
+            Data.Eulers = Extrapolate(euls, iterations);
         }
 
-        private Euler[] Extrapolate(Euler[] _eulers)
+        private Euler[] Extrapolate(Euler[] _eulers, int iterations)
         {
             ComputeKernel kernel = null;
 
@@ -312,8 +309,19 @@ namespace EBSD_Analyse
             kernel.SetValueArgument<int>(2, Data.Height);
             kernel.SetMemoryArgument(3, inputBuffer);
 
-            // Запуск 
+            // Первый (обязательный) Запуск 
             Queue.Execute(kernel, null, new long[] { _eulers.Length }, null, null);
+
+            // Перенос выхода на вход
+            Queue.CopyBuffer(outputBuffer, inputBuffer, null);
+
+            for (int i = 0; i < iterations - 1; i++)
+            {
+                // Запуск 
+                Queue.Execute(kernel, null, new long[] { _eulers.Length }, null, null);
+                Queue.CopyBuffer(outputBuffer, inputBuffer, null);
+            }
+
 
             // Считывание результата
             Euler[] res = new Euler[_eulers.Length];
