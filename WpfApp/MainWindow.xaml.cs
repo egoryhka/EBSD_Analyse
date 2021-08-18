@@ -328,7 +328,10 @@ namespace WpfApp
         }
         private void GrainsDefineButton_Click(object sender, RoutedEventArgs e)
         {
-            var a = analyzer.DefineGrains();
+            float mot;
+            if (float.TryParse(MissOrientationTreshold.Text, out mot) == false) return;
+
+            var a = analyzer.DefineGrains(mot);
 
 
             int width = analyzer.Data.Width;
@@ -350,10 +353,15 @@ namespace WpfApp
         }
 
 
-        private static readonly Regex _regex = new Regex("[^0-9.-]+"); //regex that matches disallowed text
+        private static readonly Regex _regex = new Regex("[^0-9,-]+"); //regex that matches disallowed text
         private static bool IsTextAllowed(string text)
         {
             return !_regex.IsMatch(text);
+        }
+
+        private void MissOrientationTreshold_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = !IsTextAllowed(e.Text);
         }
 
         #endregion Events
@@ -394,9 +402,10 @@ namespace WpfApp
 
 
 
+
         #endregion Helpers
 
-
+       
     }
 
 

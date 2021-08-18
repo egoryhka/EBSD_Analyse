@@ -383,7 +383,7 @@
                     <GroupBox VerticalAlignment="Top" Header="Определение зёрен">
                         <Grid>
                             <Label  Content="Пороговый угол разориентации:" Height="25" Width="205" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="9,10,0,0"/>
-                            <TextBox x:Name="MissOrientationTreshold" Height="25" Width="120" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" PreviewTextInput=""/>
+                            <TextBox x:Name="MissOrientationTreshold" Height="25" Width="125" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" PreviewTextInput="MissOrientationTreshold_PreviewTextInput"/>
                             <Button x:Name="GrainsDefineButton" Content="Определить зёрна" Height="25" Width="120" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,45,0,0" Click="GrainsDefineButton_Click"/>
                         </Grid>
                     </GroupBox>

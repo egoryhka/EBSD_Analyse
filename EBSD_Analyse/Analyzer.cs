@@ -192,7 +192,7 @@ namespace EBSD_Analyse
                     return degrees(acos(dot(a,b)/(length(a)*length(b))));
                 }
 
-                 __kernel void GetGrainMask(__global float* out, int width, int height,
+                 __kernel void GetGrainMask(__global char* out, int width, int height,
                  __global euler* in, float MissOrientationTreshold)
                  {
                      int id = get_global_id(0);
@@ -357,10 +357,9 @@ namespace EBSD_Analyse
             Queue.Dispose();
         }
 
-        public float[] DefineGrains()
+        public byte[] DefineGrains(float MissOrientationTreshold)
         {
-            float[] GrainMask = GetGrainMask();
-            return GrainMask;
+            return GetGrainMask(MissOrientationTreshold);
         }
 
         private object[] GetKernelArguments(MapVariants mapVariant)
@@ -408,7 +407,7 @@ namespace EBSD_Analyse
             }
         }
 
-        private float[] GetGrainMask()
+        private byte[] GetGrainMask(float MissOrientationTreshold)
         {
             ComputeKernel kernel = null;
 
@@ -426,22 +425,24 @@ namespace EBSD_Analyse
 
             // Инициализация буфферов
             ComputeBuffer<Euler> inputBuffer;
-            ComputeBuffer<float> outputBuffer;
+            ComputeBuffer<byte> outputBuffer;
 
             inputBuffer = new ComputeBuffer<Euler>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, Data.Eulers);
-            outputBuffer = new ComputeBuffer<float>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, new float[Data.Eulers.Length]);
+            outputBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, new byte[Data.Eulers.Length]);
 
             // Установка параметров для расчетов
             kernel.SetMemoryArgument(0, outputBuffer);
             kernel.SetValueArgument<int>(1, Data.Width);
             kernel.SetValueArgument<int>(2, Data.Height);
             kernel.SetMemoryArgument(3, inputBuffer);
+            kernel.SetValueArgument<float>(4, MissOrientationTreshold);
+
 
             // Запуск 
             Queue.Execute(kernel, null, new long[] { Data.Eulers.Length }, null, null);
 
             // Считывание результата
-            float[] res = new float[Data.Eulers.Length];
+            byte[] res = new byte[Data.Eulers.Length];
             Queue.ReadFromBuffer(outputBuffer, ref res, true, null);
 
             inputBuffer.Dispose();
