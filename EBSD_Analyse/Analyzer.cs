@@ -68,6 +68,17 @@ namespace EBSD_Analyse
             //Текст програмы, исполняющейся на GPU
             string prog = @"
 
+                 struct Euler
+                 {
+                     float x;
+                     float y;
+                     float z;
+                 }; typedef struct Euler euler;
+
+                 euler eul_sum(euler a, euler b){
+                    return (euler){a.x+b.x,a.y+b.y,a.z+b.z};
+                 }
+
                  __kernel void Euler2Color(__global char* out, int width, int height,
                  __read_only image2d_t in)
                  {
@@ -119,17 +130,6 @@ namespace EBSD_Analyse
                  }
 
              //------------------------------------------------------------
- 
-                 struct Euler
-                 {
-                     float x;
-                     float y;
-                     float z;
-                 }; typedef struct Euler euler;
-
-                 euler eul_sum(euler a, euler b){
-                 return (euler){a.x+b.x,a.y+b.y,a.z+b.z};
-                 }
 
                  __kernel void Extrapolate(__global euler* out, int width, int height,
                  __global euler* in)
@@ -188,30 +188,37 @@ namespace EBSD_Analyse
 
              //------------------------------------------------------------
 
-                 __kernel void GetGrainMask(__global char* out, int width, int height,
-                 __read_only image2d_t in)
+                float angleBetween(float3 a, float3 b){
+                    return degrees(acos(dot(a,b)/(length(a)*length(b))));
+                }
+
+                 __kernel void GetGrainMask(__global float* out, int width, int height,
+                 __global euler* in, float MissOrientationTreshold)
                  {
-                     const sampler_t smp = CLK_NORMALIZED_COORDS_FALSE | //Natural coordinates
-                                           CLK_ADDRESS_CLAMP | //Clamp to zeros
-                                           CLK_FILTER_NEAREST; //Don't interpolate
+                     int id = get_global_id(0);
 
-                     int x = get_global_id(0);
-                     int y = get_global_id(1);
+                     float3 eul = (float3)(in[id].x,in[id].y,in[id].z);
 
-                     int2 coord = (int2)(x, y); 
-                     int4 BC = read_imagei (in, smp, coord);
+                     float isEdge = 0;
 
-                     int4 col = (int4)(BC.x,BC.x,BC.x,0);
+                     bool can_up = id > width;
+                     bool can_left = (id % width) != 0;
+                     bool can_right = ((id+1) % width) != 0;
+                     bool can_down = id < (width * height - width);
+                    
+                     int up = id-width;
+                     int left = id-1;
+                     int right = id+1;
+                     int down = id+width;
+                    
+                     if(can_up && isEdge == 0) { float3 upEuler = (float3)(in[up].x,in[up].y,in[up].z); if(angleBetween(eul,upEuler)>MissOrientationTreshold) isEdge=1; }    
+                     if(can_left && isEdge == 0) { float3 leftEuler = (float3)(in[left].x,in[left].y,in[left].z); if(angleBetween(eul,leftEuler)>MissOrientationTreshold) isEdge=1; }
+                     if(can_right && isEdge == 0) { float3 rightEuler = (float3)(in[right].x,in[right].y,in[right].z); if(angleBetween(eul,rightEuler)>MissOrientationTreshold) isEdge=1; }    
+                     if(can_down && isEdge == 0) { float3 downEuler = (float3)(in[down].x,in[down].y,in[down].z); if(angleBetween(eul,downEuler)>MissOrientationTreshold) isEdge=1;  }    
 
-                     int linearId = (int)((x + y * width) * 4);
-
-                     out[linearId] = col.x; // R
-                     out[linearId+1] = col.y; // G
-                     out[linearId+2] = col.z; // B
-                     out[linearId+3] = 255; // A
-
+                     out[id] = isEdge;
                  }
-        
+ 
              //------------------------------------------------------------
                             ";
 
@@ -350,10 +357,10 @@ namespace EBSD_Analyse
             Queue.Dispose();
         }
 
-        public void DefineGrains()
+        public float[] DefineGrains()
         {
-           bool[] GrainMask = GetGrainMask();
-
+            float[] GrainMask = GetGrainMask();
+            return GrainMask;
         }
 
         private object[] GetKernelArguments(MapVariants mapVariant)
@@ -401,7 +408,7 @@ namespace EBSD_Analyse
             }
         }
 
-        private bool[] GetGrainMask()
+        private float[] GetGrainMask()
         {
             ComputeKernel kernel = null;
 
@@ -418,54 +425,32 @@ namespace EBSD_Analyse
             ComputeCommandQueue Queue = new ComputeCommandQueue(Context, Cloo.ComputePlatform.Platforms[0].Devices[0], Cloo.ComputeCommandQueueFlags.None);
 
             // Инициализация буфферов
-            //ComputeBuffer<Euler> inputBuffer;
-            ComputeBuffer<bool> outputBuffer;
+            ComputeBuffer<Euler> inputBuffer;
+            ComputeBuffer<float> outputBuffer;
 
-            //inputBuffer = new ComputeBuffer<Euler>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, Data.Eulers);
-            outputBuffer = new ComputeBuffer<bool>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, new bool[Data.Eulers.Length]);
+            inputBuffer = new ComputeBuffer<Euler>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, Data.Eulers);
+            outputBuffer = new ComputeBuffer<float>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, new float[Data.Eulers.Length]);
 
             // Установка параметров для расчетов
             kernel.SetMemoryArgument(0, outputBuffer);
             kernel.SetValueArgument<int>(1, Data.Width);
             kernel.SetValueArgument<int>(2, Data.Height);
-            //kernel.SetMemoryArgument(3, inputBuffer);
-
-            List<ComputeMemory> memoryList = new List<ComputeMemory>();
-
-            int i = 3;
-            foreach (var obj in GetKernelArguments(MapVariants.Euler))
-            {
-                if (obj as ComputeMemory != null)
-                {
-                    ComputeMemory memory = obj as ComputeMemory;
-                    kernel.SetMemoryArgument(i, memory);
-                    memoryList.Add(memory);
-                }
-                else
-                {
-                    kernel.SetValueArgument<int>(i, (int)obj);
-                }
-                i++;
-            }
+            kernel.SetMemoryArgument(3, inputBuffer);
 
             // Запуск 
-            Queue.Execute(kernel, null, new long[] { Data.Width, Data.Height}, null, null);
+            Queue.Execute(kernel, null, new long[] { Data.Eulers.Length }, null, null);
 
             // Считывание результата
-            bool[] res = new bool[Data.Eulers.Length];
+            float[] res = new float[Data.Eulers.Length];
             Queue.ReadFromBuffer(outputBuffer, ref res, true, null);
 
+            inputBuffer.Dispose();
             outputBuffer.Dispose();
-
-            foreach (var mem in memoryList)
-            {
-                if (mem != null) mem.Dispose();
-            }
-
             kernel.Dispose();
             Queue.Dispose();
 
             return res;
+
         }
 
 

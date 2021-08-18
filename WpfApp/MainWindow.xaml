@@ -360,14 +360,34 @@
             </Grid>
 
             <Grid Background="DarkGray" Width="350" Height="600">
-                <Label Content="Вид изображения:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="5,9,0,0" Height="25"/>
-                <ComboBox x:Name="MapVariantChoose"  HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="25" Margin="130,9,0,0" SelectionChanged="MapVariantChoose_SelectionChanged"  />
 
-                <Label  Content="Итераций:" Margin="6,49,270,526" Height="25"/>
-                <Label  Content="{Binding Value, ElementName=ExtrapolateSlider}" HorizontalContentAlignment="Center" Width="25" Margin="80,49,245,526" Height="25"/>
-                <Slider HorizontalAlignment="Left" x:Name="ExtrapolateSlider" Value="5" Minimum="1" Maximum="10" IsSnapToTickEnabled="True" TickFrequency="1" Margin="105,49,0,0" TickPlacement="TopLeft" VerticalAlignment="Top" Width="120" Height="25" />
-                <Button Content="Экстраполяция" x:Name="ExtrapolateButton" Height="25" Click="ExtrapolateButton_Click" Margin="230,49,25,526"/>
-                <Button x:Name="GrainsDefineButton" Content="Определить зёрна" HorizontalAlignment="Center" Margin="0,104,0,0" Height="25" VerticalAlignment="Top" Click="GrainsDefineButton_Click"/>
+                <WrapPanel Orientation="Horizontal">
+                    <GroupBox VerticalAlignment="Top" Header="Вид">
+                        <Grid>
+                            <Label Content="Вид изображения:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="9,12" Height="25"/>
+                            <ComboBox x:Name="MapVariantChoose"  HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="25" Margin="129,12,0,0" SelectionChanged="MapVariantChoose_SelectionChanged"  />
+                            <Label Content="Границы:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="65" Height="25" Margin="234,12,0,0"/>
+                            <CheckBox HorizontalAlignment="Left" VerticalAlignment="Center" Width="36" Height="16" Margin="303,2,0,0"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox VerticalAlignment="Top" Header="Экстраполяция">
+                        <Grid>
+                            <Label  Content="Итераций:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="9,11" Height="25" Width="75"/>
+                            <Label  Content="{Binding Value, ElementName=ExtrapolateSlider}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="84,11" Width="25" Height="25"/>
+                            <Slider x:Name="ExtrapolateSlider" Value="5" Minimum="1" Maximum="10" IsSnapToTickEnabled="True" TickFrequency="1" TickPlacement="TopLeft" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="109,11" Width="120" Height="25"/>
+                            <Button Content="Экстраполяция" x:Name="ExtrapolateButton"  VerticalAlignment="Top" HorizontalAlignment="Left" Margin="229,11,0,0" Width="100" Height="25"  Click="ExtrapolateButton_Click"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox VerticalAlignment="Top" Header="Определение зёрен">
+                        <Grid>
+                            <Label  Content="Пороговый угол разориентации:" Height="25" Width="205" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="9,10,0,0"/>
+                            <TextBox x:Name="MissOrientationTreshold" Height="25" Width="120" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" PreviewTextInput=""/>
+                            <Button x:Name="GrainsDefineButton" Content="Определить зёрна" Height="25" Width="120" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,45,0,0" Click="GrainsDefineButton_Click"/>
+                        </Grid>
+                    </GroupBox>
+                </WrapPanel>
 
             </Grid>
 

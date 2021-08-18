@@ -15,6 +15,7 @@ using System.Threading;
 using System.Windows.Media.Media3D;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Text.RegularExpressions;
 
 namespace WpfApp
 {
@@ -327,7 +328,32 @@ namespace WpfApp
         }
         private void GrainsDefineButton_Click(object sender, RoutedEventArgs e)
         {
-            analyzer.DefineGrains();
+            var a = analyzer.DefineGrains();
+
+
+            int width = analyzer.Data.Width;
+            int height = analyzer.Data.Height;
+
+
+            Bitmap bmp = new Bitmap(width,height);
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    bmp.SetPixel(x, y, a[x + y * width] == 1 ? Color.Red : Color.LightGray);
+                }
+            }
+
+
+            EBSD_Image.Source = CreateBitmapSourceFromBitmap(bmp);
+        }
+
+
+        private static readonly Regex _regex = new Regex("[^0-9.-]+"); //regex that matches disallowed text
+        private static bool IsTextAllowed(string text)
+        {
+            return !_regex.IsMatch(text);
         }
 
         #endregion Events
@@ -370,7 +396,7 @@ namespace WpfApp
 
         #endregion Helpers
 
-        
+
     }
 
 
