@@ -187,7 +187,7 @@ namespace WpfApp
             catch (Exception ex) { MessageBox.Show($"Ошибка чтения файла! \n {ex.ToString()}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error); }
         }
 
-        private void UpdateImage()
+        private void UpdateImage(bool? showGrains)
         {
             if (analyzer.Data.Ebsd_points == null) return; // No data
 
@@ -195,6 +195,15 @@ namespace WpfApp
             int height = analyzer.Data.Height;
 
             var colors = analyzer.GetColorMap((MapVariants)MapVariantChoose.SelectedItem); // gpu work 
+
+            if (showGrains == true)
+            {
+                float mot;
+                if (float.TryParse(MissOrientationTreshold.Text, out mot))
+                {
+                    colors = analyzer.ApplyGrainFilter(colors, mot);
+                }
+            }
 
             Bitmap bmp = ByteArrayToBitmap(colors, width, height);
 
@@ -230,7 +239,7 @@ namespace WpfApp
 
                 //               Имя текущего открытого файла
                 ToJson(analyzer.Data, /*Title +*/ "Файл.ebsd");
-                UpdateImage();
+                UpdateImage(ShowGrainMaskCheckbox.IsChecked);
             }
         }
         #endregion Processing_Events
@@ -239,7 +248,7 @@ namespace WpfApp
         #region Events
         private void MapVariantChoose_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            UpdateImage();
+            UpdateImage(ShowGrainMaskCheckbox.IsChecked);
         }
 
         private void ExtrapolateButton_Click(object sender, RoutedEventArgs e)
@@ -247,7 +256,7 @@ namespace WpfApp
             if (analyzer.Data.Ebsd_points == null || analyzer == null) { MessageBox.Show("Не с чем работать"); return; }
             analyzer.Extrapolate((int)ExtrapolateSlider.Value);
 
-            UpdateImage();
+            UpdateImage(ShowGrainMaskCheckbox.IsChecked);
         }
 
         private void EBSD_Image_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -328,28 +337,8 @@ namespace WpfApp
         }
         private void GrainsDefineButton_Click(object sender, RoutedEventArgs e)
         {
-            float mot;
-            if (float.TryParse(MissOrientationTreshold.Text, out mot) == false) return;
-
-            var a = analyzer.DefineGrains(mot);
-
-
-            int width = analyzer.Data.Width;
-            int height = analyzer.Data.Height;
-
-
-            Bitmap bmp = new Bitmap(width,height);
-
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    bmp.SetPixel(x, y, a[x + y * width] == 1 ? Color.Red : Color.LightGray);
-                }
-            }
-
-
-            EBSD_Image.Source = CreateBitmapSourceFromBitmap(bmp);
+            analyzer.RecalculateGrains();
+            // и т.д
         }
 
 
@@ -363,6 +352,22 @@ namespace WpfApp
         {
             e.Handled = !IsTextAllowed(e.Text);
         }
+
+        private void MissOrientationTreshold_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            UpdateImage(ShowGrainMaskCheckbox.IsChecked);
+        }
+
+        private void ShowGrainMaskCheckbox_Checked(object sender, RoutedEventArgs e)
+        {
+            UpdateImage(ShowGrainMaskCheckbox.IsChecked);
+        }
+
+        private void ShowGrainMaskCheckbox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            UpdateImage(ShowGrainMaskCheckbox.IsChecked);
+        }
+      
 
         #endregion Events
 
@@ -403,9 +408,10 @@ namespace WpfApp
 
 
 
+
         #endregion Helpers
 
-       
+     
     }
 
 

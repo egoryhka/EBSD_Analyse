@@ -50,6 +50,7 @@ namespace EBSD_Analyse
     {
         public Analyzer_Data Data;
 
+        private byte[] GrainMask;
         private ComputeContext Context;
         private ComputeProgram Program;
 
@@ -131,6 +132,7 @@ namespace EBSD_Analyse
 
              //------------------------------------------------------------
 
+
                  __kernel void Extrapolate(__global euler* out, int width, int height,
                  __global euler* in)
                  {
@@ -166,20 +168,25 @@ namespace EBSD_Analyse
                         int upRight = id-width+1;
                         int downLeft = id+width-1;
                         int downRight = id+width+1;
+
+                        if(can_up && (in[up].x > 0 || in[up].y > 0 || in[up].z >0)) { out[id] = in[up]; }    
+                        if(can_left && (in[left].x > 0 || in[left].y > 0 || in[left].z >0)) { out[id] = in[left]; }    
+                        if(can_right && (in[right].x > 0 || in[right].y > 0 || in[right].z >0)) { out[id] = in[right]; }    
+                        if(can_down && (in[down].x > 0 || in[down].y > 0 || in[down].z >0)) { out[id] = in[down]; }    
                         
-                        if(can_up && (in[up].x > 0 || in[up].y > 0 || in[up].z >0)) {k++; sum = eul_sum(sum, in[up]); }    
-                        if(can_left && (in[left].x > 0 || in[left].y > 0 || in[left].z >0)) {k++; sum = eul_sum(sum, in[left]); }    
-                        if(can_right && (in[right].x > 0 || in[right].y > 0 || in[right].z >0)) {k++; sum = eul_sum(sum, in[right]); }    
-                        if(can_down && (in[down].x > 0 || in[down].y > 0 || in[down].z >0)) {k++; sum = eul_sum(sum, in[down]); }    
+                        //if(can_up && (in[up].x > 0 || in[up].y > 0 || in[up].z >0)) {k++; sum = eul_sum(sum, in[up]); }    
+                        //if(can_left && (in[left].x > 0 || in[left].y > 0 || in[left].z >0)) {k++; sum = eul_sum(sum, in[left]); }    
+                        //if(can_right && (in[right].x > 0 || in[right].y > 0 || in[right].z >0)) {k++; sum = eul_sum(sum, in[right]); }    
+                        //if(can_down && (in[down].x > 0 || in[down].y > 0 || in[down].z >0)) {k++; sum = eul_sum(sum, in[down]); }    
 
-                        if(can_upLeft && (in[upLeft].x > 0 || in[upLeft].y > 0 || in[upLeft].z >0)) {k++; sum = eul_sum(sum, in[upLeft]); }    
-                        if(can_upRifht && (in[upRight].x > 0 || in[upRight].y > 0 || in[upRight].z >0)) {k++; sum = eul_sum(sum, in[upRight]); }    
-                        if(can_downLeft && (in[downLeft].x > 0 || in[downLeft].y > 0 || in[downLeft].z >0)) {k++; sum = eul_sum(sum, in[downLeft]); }    
-                        if(can_downRight && (in[downRight].x > 0 || in[downRight].y > 0 || in[downRight].z >0)) {k++; sum = eul_sum(sum, in[downRight]); }    
+                        //if(can_upLeft && (in[upLeft].x > 0 || in[upLeft].y > 0 || in[upLeft].z >0)) {k++; sum = eul_sum(sum, in[upLeft]); }    
+                        //if(can_upRifht && (in[upRight].x > 0 || in[upRight].y > 0 || in[upRight].z >0)) {k++; sum = eul_sum(sum, in[upRight]); }    
+                        //if(can_downLeft && (in[downLeft].x > 0 || in[downLeft].y > 0 || in[downLeft].z >0)) {k++; sum = eul_sum(sum, in[downLeft]); }    
+                        //if(can_downRight && (in[downRight].x > 0 || in[downRight].y > 0 || in[downRight].z >0)) {k++; sum = eul_sum(sum, in[downRight]); }    
 
-                        if(k >= 4){
-                            out[id] = (euler){ sum.x / k, sum.y / k, sum.z / k};
-                        }
+                        //if(k >= 4){
+                        //    out[id] = (euler){ sum.x / k, sum.y / k, sum.z / k};
+                        //}
 
                      } 
                      
@@ -218,7 +225,18 @@ namespace EBSD_Analyse
 
                      out[id] = isEdge;
                  }
- 
+
+             //------------------------------------------------------------
+
+                 __kernel void GrainMaskFilter(__global char* out, int width, int height,
+                 __global char* in, __global char* grainMask)
+                 {
+                     int id = get_global_id(0);
+                     int maskId = id/4;
+                     if(grainMask[maskId]==0) out[id]=in[id];
+                     else out[id] = 255;
+                 }
+
              //------------------------------------------------------------
                             ";
 
@@ -302,6 +320,57 @@ namespace EBSD_Analyse
             return colors;
         }
 
+        public byte[] ApplyGrainFilter(byte[] img, float MissOrientationThreshold)
+        {
+            GrainMask = CalculateGrainMask(MissOrientationThreshold);
+
+            ComputeKernel kernel = null;
+
+            // Инициализация новой программы
+            try
+            {
+                kernel = Program.CreateKernel("GrainMaskFilter");
+            }
+            catch { }
+
+            if (kernel == null) return null;
+
+            // Создание програмной очереди.
+            ComputeCommandQueue Queue = new ComputeCommandQueue(Context, Cloo.ComputePlatform.Platforms[0].Devices[0], Cloo.ComputeCommandQueueFlags.None);
+
+            // Инициализация буфферов
+            ComputeBuffer<byte> inputBuffer;
+            ComputeBuffer<byte> grainMaskBuffer;
+            ComputeBuffer<byte> outputBuffer;
+
+            inputBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, img);
+            grainMaskBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, GrainMask);
+            outputBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite | ComputeMemoryFlags.CopyHostPointer, new byte[img.Length]);
+
+            // Установка параметров для расчетов
+            kernel.SetMemoryArgument(0, outputBuffer);
+            kernel.SetValueArgument<int>(1, Data.Width);
+            kernel.SetValueArgument<int>(2, Data.Height);
+            kernel.SetMemoryArgument(3, inputBuffer);
+            kernel.SetMemoryArgument(4, grainMaskBuffer);
+
+
+            // Запуск 
+            Queue.Execute(kernel, null, new long[] { img.Length }, null, null);
+
+            // Считывание результата
+            byte[] res = new byte[img.Length];
+            Queue.ReadFromBuffer(outputBuffer, ref res, true, null);
+
+            inputBuffer.Dispose();
+            outputBuffer.Dispose();
+            grainMaskBuffer.Dispose();
+            kernel.Dispose();
+            Queue.Dispose();
+
+            return res;
+        }
+
         public void Extrapolate(int iterations)
         {
             ComputeKernel kernel = null;
@@ -357,9 +426,9 @@ namespace EBSD_Analyse
             Queue.Dispose();
         }
 
-        public byte[] DefineGrains(float MissOrientationTreshold)
+        public void RecalculateGrains()
         {
-            return GetGrainMask(MissOrientationTreshold);
+            // собственно заливка и т.д (долгие операции)
         }
 
         private object[] GetKernelArguments(MapVariants mapVariant)
@@ -407,7 +476,7 @@ namespace EBSD_Analyse
             }
         }
 
-        private byte[] GetGrainMask(float MissOrientationTreshold)
+        private byte[] CalculateGrainMask(float MissOrientationTreshold)
         {
             ComputeKernel kernel = null;
 
