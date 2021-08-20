@@ -373,7 +373,7 @@ namespace WpfApp
             if (analyzer == null || analyzer.Data.Grains.Count == 0) return;
 
             System.Windows.Point pt = e.GetPosition(EBSD_Image);
-            Grain grain = analyzer.Data.Grains.FirstOrDefault(x => x.Points.Contains(new System.Numerics.Vector2((int)pt.X, (int)pt.Y)));
+            Grain grain = analyzer.Data.Grains.FirstOrDefault(x => (x.Points.Contains(new System.Numerics.Vector2((int)pt.X, (int)pt.Y))||x.Edges.Contains(new System.Numerics.Vector2((int)pt.X, (int)pt.Y))));
 
             if (grain.Edges == null || grain.Points == null) return;
 
