@@ -16,7 +16,7 @@
                 <WrapPanel Orientation="Horizontal">
 
                     <ScrollViewer x:Name="scroll" Margin="10,9,10,10" Background="LightGray" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" CanContentScroll="True" MaxHeight="400" MaxWidth="400">
-                        <Image x:Name="EBSD_Image" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseWheel="EBSD_Image_MouseWheel" MouseMove="EBSD_Image_MouseMove" >
+                        <Image x:Name="EBSD_Image" RenderOptions.BitmapScalingMode="NearestNeighbor" MouseWheel="EBSD_Image_MouseWheel" MouseMove="EBSD_Image_MouseMove" MouseLeftButtonUp="EBSD_Image_MouseLeftButtonUp" >
                             <Image.LayoutTransform>
                                 <TransformGroup>
                                     <ScaleTransform x:Name="ImageZoomTransform" ScaleX="1" ScaleY="1"></ScaleTransform>

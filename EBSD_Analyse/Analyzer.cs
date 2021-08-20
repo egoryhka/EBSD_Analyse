@@ -1,9 +1,7 @@
 ﻿using Cloo;
 using System;
-using System.Drawing;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
+using System.Numerics;
 
 namespace EBSD_Analyse
 {
@@ -14,10 +12,12 @@ namespace EBSD_Analyse
         public int[] BCs;
         public int Width;
         public int Height;
+        public List<Grain> Grains;
 
         public Analyzer_Data(EBSD_Point[,] ebsd_points)
         {
             Ebsd_points = ebsd_points;
+            Grains = new List<Grain>();
 
             Width = ebsd_points.GetLength(0);
             Height = ebsd_points.GetLength(1);
@@ -51,6 +51,7 @@ namespace EBSD_Analyse
         public Analyzer_Data Data;
 
         private byte[] GrainMask;
+        private bool[,] GrainPointsDefined;
         private ComputeContext Context;
         private ComputeProgram Program;
 
@@ -428,8 +429,62 @@ namespace EBSD_Analyse
 
         public void RecalculateGrains()
         {
+            if (GrainMask == null) return;
+
+
             // собственно заливка и т.д (долгие операции)
+            Data.Grains = new List<Grain>();
+
+            GrainPointsDefined = new bool[Data.Width, Data.Height];
+
+            for (int y = 0; y < Data.Height; y++)
+            {
+                for (int x = 0; x < Data.Width; x++)
+                {
+                 
+                    int id_2D = x + y * Data.Width;
+                    if (GrainMask[id_2D] != 1 && !GrainPointsDefined[x, y])
+                    {
+                        Grain grain = new Grain() { Edges = new List<Vector2>(), Points = new List<Vector2>() };
+                        FloodFill(new Vector2(x, y), ref grain);
+
+                        Data.Grains.Add(grain);
+                    }
+                }
+            }
+
         }
+
+        private void FloodFill(Vector2 pt, ref Grain grain)
+        {
+            Stack<Vector2> pixels = new Stack<Vector2>();
+            pixels.Push(pt);
+
+            while (pixels.Count > 0)
+            {
+                Vector2 a = pixels.Pop();
+                if (a.X < Data.Width && a.X >= 0 &&
+                        a.Y < Data.Height && a.Y >= 0 && GrainPointsDefined[(int)a.X, (int)a.Y] == false)//make sure we stay within bounds
+                {
+
+                    if (GrainMask[(int)a.X + (int)a.Y * Data.Width] == 0)
+                    {
+                        grain.Points.Add(a);
+                        GrainPointsDefined[(int)a.X, (int)a.Y] = true;
+                        pixels.Push(new Vector2(a.X - 1, a.Y));
+                        pixels.Push(new Vector2(a.X + 1, a.Y));
+                        pixels.Push(new Vector2(a.X, a.Y - 1));
+                        pixels.Push(new Vector2(a.X, a.Y + 1));
+                    }
+                    else
+                    {
+                        grain.Edges.Add(a);
+                    }
+                }
+            }
+            return;
+        }
+
 
         private object[] GetKernelArguments(MapVariants mapVariant)
         {
@@ -560,6 +615,12 @@ namespace EBSD_Analyse
         {
             X = x; Y = y; Z = z;
         }
+    }
+
+    public struct Grain
+    {
+        public List<Vector2> Points;
+        public List<Vector2> Edges;
     }
 
 
