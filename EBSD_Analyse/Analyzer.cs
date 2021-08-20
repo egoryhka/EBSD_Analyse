@@ -235,7 +235,7 @@ namespace EBSD_Analyse
                      int id = get_global_id(0);
                      int maskId = id/4;
                      if(grainMask[maskId]==0) out[id]=in[id];
-                     else out[id] = 255;
+                     else out[id] = 200;
                  }
 
              //------------------------------------------------------------
@@ -427,10 +427,9 @@ namespace EBSD_Analyse
             Queue.Dispose();
         }
 
-        public void RecalculateGrains()
+        public void RecalculateGrains(float MissOrientationThreshold)
         {
-            if (GrainMask == null) return;
-
+            GrainMask = CalculateGrainMask(MissOrientationThreshold);
 
             // собственно заливка и т.д (долгие операции)
             Data.Grains = new List<Grain>();

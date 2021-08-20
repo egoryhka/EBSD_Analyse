@@ -337,7 +337,11 @@ namespace WpfApp
         }
         private void GrainsDefineButton_Click(object sender, RoutedEventArgs e)
         {
-            analyzer.RecalculateGrains();
+            float mot;
+            if (float.TryParse(MissOrientationTreshold.Text, out mot))
+            {
+                analyzer.RecalculateGrains(mot);
+            }
             // и т.д
         }
 
