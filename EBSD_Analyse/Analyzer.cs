@@ -235,7 +235,7 @@ namespace EBSD_Analyse
                      int id = get_global_id(0);
                      int maskId = id/4;
                      if(grainMask[maskId]==0) out[id]=in[id];
-                     else out[id] = 200;
+                     else out[id] = 255;
                  }
 
              //------------------------------------------------------------

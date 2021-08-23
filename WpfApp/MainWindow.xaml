@@ -12,7 +12,7 @@
     <Grid>
         <WrapPanel Orientation="Vertical">
 
-            <Grid Background="Gray" Width="420" Height="600">
+            <Grid Background="Gray" Width="420" Height="584">
                 <WrapPanel Orientation="Horizontal">
 
                     <ScrollViewer x:Name="scroll" Margin="10,9,10,10" Background="LightGray" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Visible" CanContentScroll="True" MaxHeight="400" MaxWidth="400">
@@ -359,19 +359,19 @@
 
             </Grid>
 
-            <Grid Background="DarkGray" Width="350" Height="600">
+            <Grid Background="DarkGray" Width="350" Height="584">
 
                 <WrapPanel Orientation="Horizontal">
-                    <GroupBox VerticalAlignment="Top" Header="Вид">
+                    <GroupBox VerticalAlignment="Top" Header="Вид" Width="350">
                         <Grid>
                             <Label Content="Вид изображения:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Margin="9,12" Height="25"/>
-                            <ComboBox x:Name="MapVariantChoose"  HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="25" Margin="129,12,0,0" SelectionChanged="MapVariantChoose_SelectionChanged"  />
+                            <ComboBox x:Name="MapVariantChoose" SelectedIndex="0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="100" Height="25" Margin="129,12,0,0" SelectionChanged="MapVariantChoose_SelectionChanged"  />
                             <Label Content="Границы:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="65" Height="25" Margin="234,12,0,0"/>
-                            <CheckBox x:Name="ShowGrainMaskCheckbox" HorizontalAlignment="Left" VerticalAlignment="Center" Width="36" Height="16" Margin="303,0,0,0" Checked="ShowGrainMaskCheckbox_Checked" Unchecked="ShowGrainMaskCheckbox_Unchecked"/>
+                            <CheckBox x:Name="ShowGrainMaskCheckbox" HorizontalAlignment="Left" VerticalAlignment="Center" Width="16" Height="16" Margin="303,0,0,0" Checked="ShowGrainMaskCheckbox_Checked" Unchecked="ShowGrainMaskCheckbox_Unchecked"/>
                         </Grid>
                     </GroupBox>
 
-                    <GroupBox VerticalAlignment="Top" Header="Экстраполяция">
+                    <GroupBox VerticalAlignment="Top" Header="Экстраполяция" Width="350">
                         <Grid>
                             <Label  Content="Итераций:" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="9,11" Height="25" Width="75"/>
                             <Label  Content="{Binding Value, ElementName=ExtrapolateSlider}" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="84,11" Width="25" Height="25"/>
@@ -380,43 +380,55 @@
                         </Grid>
                     </GroupBox>
 
-                    <GroupBox VerticalAlignment="Top" Header="Определение зёрен">
+                    <GroupBox VerticalAlignment="Top" Header="Определение зёрен" MaxHeight="250" Width="350">
                         <Grid>
                             <Label  Content="Пороговый угол разориентации:" Height="25" Width="205" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="9,10,0,0"/>
-                            <TextBox x:Name="MissOrientationTreshold" Height="25" Width="125" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" PreviewTextInput="MissOrientationTreshold_PreviewTextInput" TextChanged="MissOrientationTreshold_TextChanged"/>
+                            <TextBox x:Name="MissOrientationTreshold" VerticalContentAlignment="Center" Height="25" Width="120" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" PreviewTextInput="MissOrientationTreshold_PreviewTextInput" TextChanged="MissOrientationTreshold_TextChanged"/>
                             <Button x:Name="GrainsDefineButton" Content="Определить зёрна" Height="25" Width="120" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,45,0,0" Click="GrainsDefineButton_Click"/>
+
+                            <ListView x:Name="GrainsInfoList" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="9,44.15,0,9" Width="200" Height="150">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Header="Id" Width="40" DisplayMemberBinding="{Binding id}"/>
+
+                                        <GridViewColumn Header="S, µm²" Width="100" DisplayMemberBinding="{Binding size}"/>
+                                        <GridViewColumn Header="Phase" Width="55" DisplayMemberBinding="{Binding phase}"/>
+
+                                    </GridView>
+                                </ListView.View>
+                            </ListView>
+
                         </Grid>
                     </GroupBox>
+
                 </WrapPanel>
 
             </Grid>
 
-            <Grid Background="LightGray" Width="230" Height="600">
+            <Grid Background="LightGray" Width="230" Height="584">
                 <StackPanel Background="Gray" x:Name="DropPanel" AllowDrop="True" Drop="DropPanel_Drop" Height="100" VerticalAlignment="Top">
                     <Button BorderThickness="2" Background="Wheat" x:Name="OpenFileButton" Content="Открыть" Click="OpenFileButton_Click"/>
                     <Label HorizontalContentAlignment="Center" Content="Drop EBSD data here" />
                 </StackPanel>
 
+                <ListView x:Name="FilesList" Height="484" VerticalAlignment="Bottom" Width="230" SelectionChanged="FilesList_SelectionChanged">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Имя" Width="100" DisplayMemberBinding="{Binding name}"/>
 
-                <ScrollViewer VerticalScrollBarVisibility="Visible" CanContentScroll="True" Margin="0,100,0,0" >
-                    <StackPanel Orientation="Horizontal">
-                        <ListBox x:Name="ImagesNames" BorderThickness="0"  SelectionMode="Single"  Width="100" ItemsSource="{Binding ImageList}" Height="500">
-                            <ListBox.Resources>
-                                <DataTemplate x:Key="data">
-                                    <Label Content="{Binding Path=ImageName}"/>
-                                </DataTemplate>
-                            </ListBox.Resources>
-                        </ListBox>
+                            <GridViewColumn Header="Изображение" Width="130">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <Image Width="100" Source="{Binding image}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
 
-                        <ListBox x:Name="ImagesSources" BorderThickness="0"  SelectionMode="Single" Width="115" ItemsSource="{Binding ImageList}" Height="500">
-                            <ListBox.Resources>
-                                <DataTemplate x:Key="data">
-                                    <!--<Image Source="{Binding Converter={StaticResource imgConverter}}"/>-->
-                                </DataTemplate>
-                            </ListBox.Resources>
-                        </ListBox>
-                    </StackPanel>
-                </ScrollViewer>
 
 
 

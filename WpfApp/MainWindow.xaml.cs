@@ -16,15 +16,47 @@ using System.Windows.Media.Media3D;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace WpfApp
 {
+
+
+    public class FileInfo
+    {
+        public string name { get; set; }
+        public string dataPath { get; set; }
+        public BitmapFrame image { get; set; }
+    }
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     /// 
     public partial class MainWindow : Window
     {
+        private FileInfo[] ReadFilesHistory(string path)
+        {
+            FileInfo[] history;
+            using (StreamReader sr = new StreamReader(path))
+            {
+                string json = sr.ReadToEnd();
+
+                history = JsonConvert.DeserializeObject<FileInfo[]>(json);
+            }
+            return history;
+        }
+
+        private void SaveFilesHistory(string path, FileInfo[] history)
+        {
+            using (StreamWriter sw = new StreamWriter(path))
+            {
+
+                string json = JsonConvert.SerializeObject(history);
+
+                sw.Write(json);
+            }
+        }
+
 
         public string FilePath
         {
@@ -39,6 +71,8 @@ namespace WpfApp
         }
         private string _filePath;
 
+        const string historyPath = "FilesHistory";
+        public List<FileInfo> FilesHistory = new List<FileInfo>();
         private Analyzer analyzer;
 
         private void Initialize()
@@ -52,12 +86,24 @@ namespace WpfApp
             Initialize();
             InitializeComponent();
 
-            if (File.Exists("Файл.ebsd"))
-                analyzer.Data = FromJson("Файл.ebsd");
 
+            if (!File.Exists(historyPath))
+            {
+                File.Create(historyPath);
+            }
+            else
+            {
+                FileInfo[] history = ReadFilesHistory(historyPath);
+
+                if (history != null)
+                {
+                    FilesHistory.AddRange(history);
+
+                    FilesList.ItemsSource = FilesHistory;
+                }
+            }
 
             MapVariantChoose.ItemsSource = Enum.GetValues(typeof(MapVariants)).Cast<MapVariants>();
-            MapVariantChoose.SelectedIndex = 0;
 
         }
 
@@ -155,16 +201,22 @@ namespace WpfApp
         private void ToJson(Analyzer_Data data, string path)
         {
             string json = JsonConvert.SerializeObject(data);
-            using (System.IO.StreamWriter sw = new System.IO.StreamWriter(path))
+            using (StreamWriter sw = new StreamWriter(path))
             { sw.Write(json); }
         }
-        private Analyzer_Data FromJson(string path)
+        private Analyzer_Data? FromJson(string path)
         {
             string json;
+            Analyzer_Data? data = null;
+            try
+            {
+                using (StreamReader sr = new StreamReader(path))
+                { json = sr.ReadToEnd(); }
+                data = JsonConvert.DeserializeObject<Analyzer_Data>(json);
+            }
+            catch (Exception ex) { MessageBox.Show($"Ошибка чтения файла! \n {ex.ToString()}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error); }
 
-            using (System.IO.StreamReader sr = new System.IO.StreamReader(path))
-            { json = sr.ReadToEnd(); }
-            return JsonConvert.DeserializeObject<Analyzer_Data>(json);
+            return data;
         }
 
         #endregion File_Saving
@@ -204,12 +256,23 @@ namespace WpfApp
                     colors = analyzer.ApplyGrainFilter(colors, mot);
                 }
             }
-
             Bitmap bmp = ByteArrayToBitmap(colors, width, height);
-
             EBSD_Image.Source = CreateBitmapSourceFromBitmap(bmp);
 
-            bmp.Save("Ebsd_Image");
+            if (!File.Exists(Title + ".png"))
+            {
+                bmp.Save(Title + ".png");
+            }
+
+            FileInfo fileInfo = new FileInfo() { dataPath = Title + ".ebsd", image = BitmapFrame.Create(new Uri(Path.GetFullPath(Title + ".png"))), name = Title };
+            if (FilesHistory.FirstOrDefault(x => x.name == fileInfo.name) == null)
+            {
+                FilesHistory.Add(fileInfo);
+                SaveFilesHistory(historyPath, FilesHistory.ToArray());
+            }
+
+            FilesList.ItemsSource = FilesHistory;
+            FilesList.Items.Refresh();
         }
 
         #endregion Processing
@@ -237,8 +300,9 @@ namespace WpfApp
             {
                 analyzer.Data = new Analyzer_Data((EBSD_Point[,])e.Result);
 
-                //               Имя текущего открытого файла
-                ToJson(analyzer.Data, /*Title +*/ "Файл.ebsd");
+                //                    Имя текущего открытого файла
+                ToJson(analyzer.Data, Title + ".ebsd");
+
                 UpdateImage();
             }
         }
@@ -377,7 +441,7 @@ namespace WpfApp
             if (analyzer == null || analyzer.Data.Grains.Count == 0) return;
 
             System.Windows.Point pt = e.GetPosition(EBSD_Image);
-            Grain grain = analyzer.Data.Grains.FirstOrDefault(x => (x.Points.Contains(new System.Numerics.Vector2((int)pt.X, (int)pt.Y))||x.Edges.Contains(new System.Numerics.Vector2((int)pt.X, (int)pt.Y))));
+            Grain grain = analyzer.Data.Grains.FirstOrDefault(x => (x.Points.Contains(new System.Numerics.Vector2((int)pt.X, (int)pt.Y)) || x.Edges.Contains(new System.Numerics.Vector2((int)pt.X, (int)pt.Y))));
 
             if (grain.Edges == null || grain.Points == null) return;
 
@@ -394,6 +458,21 @@ namespace WpfApp
             EBSD_Image.Source = CreateBitmapSourceFromBitmap(bmp);
 
         }
+
+        private void FilesList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            var item = e.AddedItems[0];
+            if (item != null)
+            {
+                FileInfo info = item as FileInfo;
+                Analyzer_Data? data = FromJson(info.dataPath);
+                if (data == null) { MessageBox.Show("Не удаётся открыть!"); return; }
+                analyzer.Data = (Analyzer_Data)data;
+                Title = info.name;
+                UpdateImage();
+            }
+        }
+
         #endregion Events
 
         // Helpers
@@ -424,6 +503,7 @@ namespace WpfApp
                 Int32Rect.Empty,
                 BitmapSizeOptions.FromEmptyOptions());
         }
+
 
 
 
