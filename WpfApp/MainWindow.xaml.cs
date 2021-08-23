@@ -407,6 +407,9 @@ namespace WpfApp
                 analyzer.RecalculateGrains(mot);
             }
             // и т.д
+
+
+            GrainsInfoList.ItemsSource = analyzer.Data.Grains;
         }
 
 
@@ -443,6 +446,19 @@ namespace WpfApp
             System.Windows.Point pt = e.GetPosition(EBSD_Image);
             Grain grain = analyzer.Data.Grains.FirstOrDefault(x => (x.Points.Contains(new System.Numerics.Vector2((int)pt.X, (int)pt.Y)) || x.Edges.Contains(new System.Numerics.Vector2((int)pt.X, (int)pt.Y))));
 
+            SelectGrain(grain);
+
+            if (GrainsInfoList.Items.Contains(grain))
+            {
+                GrainsInfoList.SelectedItem = grain;
+                GrainsInfoList.ScrollIntoView(GrainsInfoList.SelectedItem);
+            }
+
+        }
+
+
+        private void SelectGrain(Grain grain)
+        {
             if (grain.Edges == null || grain.Points == null) return;
 
             UpdateImage();
@@ -456,21 +472,34 @@ namespace WpfApp
             }
 
             EBSD_Image.Source = CreateBitmapSourceFromBitmap(bmp);
-
         }
 
         private void FilesList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
+            if (e.AddedItems.Count <= 0) return;
             var item = e.AddedItems[0];
             if (item != null)
             {
                 FileInfo info = item as FileInfo;
                 Analyzer_Data? data = FromJson(info.dataPath);
-                if (data == null) { MessageBox.Show("Не удаётся открыть!"); return; }
+                if (data == null)
+                {
+                    MessageBox.Show("Не удаётся открыть!");
+                    FilesHistory.Remove(info);
+                    SaveFilesHistory(historyPath, FilesHistory.ToArray());
+                    FilesList.ItemsSource = FilesList.ItemsSource.OfType<FileInfo>().Where(x => x != info);
+                    return;
+                }
                 analyzer.Data = (Analyzer_Data)data;
                 Title = info.name;
+                GrainsInfoList.ItemsSource = null;
                 UpdateImage();
             }
+        }
+        private void GrainsInfoList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (e.AddedItems.Count > 0)
+                SelectGrain((Grain)e.AddedItems[0]);
         }
 
         #endregion Events
@@ -503,6 +532,7 @@ namespace WpfApp
                 Int32Rect.Empty,
                 BitmapSizeOptions.FromEmptyOptions());
         }
+
 
 
 

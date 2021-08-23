@@ -436,17 +436,19 @@ namespace EBSD_Analyse
 
             GrainPointsDefined = new bool[Data.Width, Data.Height];
 
+            int grainId = 0;
             for (int y = 0; y < Data.Height; y++)
             {
                 for (int x = 0; x < Data.Width; x++)
                 {
-                 
+
                     int id_2D = x + y * Data.Width;
                     if (GrainMask[id_2D] != 1 && !GrainPointsDefined[x, y])
                     {
                         Grain grain = new Grain() { Edges = new List<Vector2>(), Points = new List<Vector2>() };
                         FloodFill(new Vector2(x, y), ref grain);
-
+                        grain.id = grainId;
+                        grainId++;
                         Data.Grains.Add(grain);
                     }
                 }
@@ -620,6 +622,9 @@ namespace EBSD_Analyse
     {
         public List<Vector2> Points;
         public List<Vector2> Edges;
+
+        public int id { get; set; }
+        public float size => Points.Count + Edges.Count;
     }
 
 
