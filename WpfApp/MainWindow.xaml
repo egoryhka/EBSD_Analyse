@@ -384,20 +384,26 @@
                         <Grid>
                             <Label  Content="Пороговый угол разориентации:" Height="25" Width="205" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="9,10,0,0"/>
                             <TextBox x:Name="MissOrientationTreshold" VerticalContentAlignment="Center" Height="25" Width="120" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" PreviewTextInput="MissOrientationTreshold_PreviewTextInput" TextChanged="MissOrientationTreshold_TextChanged"/>
-                            <Button x:Name="GrainsDefineButton" Content="Определить зёрна" Height="25" Width="120" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,45,0,0" Click="GrainsDefineButton_Click"/>
+                            <Button x:Name="GrainsDefineButton" Content="Определить зёрна" Height="25" Width="120" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,45.15,0,0" Click="GrainsDefineButton_Click"/>
 
-                            <ListView x:Name="GrainsInfoList" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="9,44.15,0,9" Width="200" Height="150" SelectionChanged="GrainsInfoList_SelectionChanged">
+                            <ListView x:Name="GrainsInfoList" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="9,45.15,0,9" BorderThickness="0" Width="200" Height="150" SelectionChanged="GrainsInfoList_SelectionChanged">
                                 <ListView.View>
                                     <GridView>
-                                        <GridViewColumn Header="Id" Width="40" DisplayMemberBinding="{Binding id}"/>
+                                        <GridViewColumn Header="Id" Width="50" DisplayMemberBinding="{Binding id}"/>
 
-                                        <GridViewColumn Header="S, µm²" Width="100" DisplayMemberBinding="{Binding size}"/>
-                                        <!--<GridViewColumn Header="Phase" Width="55" DisplayMemberBinding="{Binding phase}"/>-->
+                                        <GridViewColumn Header="S, µm²" Width="80" DisplayMemberBinding="{Binding size}"/>
+                                        <GridViewColumn Header="Phase" Width="65" DisplayMemberBinding="{Binding phase}"/>
 
                                     </GridView>
                                 </ListView.View>
                             </ListView>
 
+                        </Grid>
+                    </GroupBox>
+
+                    <GroupBox VerticalAlignment="Top" Header="Статистика" Width="350">
+                        <Grid>
+                            <!--Chart (may be phase/size) (use some chart lib*)-->
                         </Grid>
                     </GroupBox>
 

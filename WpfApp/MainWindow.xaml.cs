@@ -149,6 +149,8 @@ namespace WpfApp
                 {
                     for (int _x = 0; _x < xSize; _x++)
                     {
+                        var phase = worksheet.Cells[k + 2, 2].Value;
+
                         var x = worksheet.Cells[k + 2, 3].Value;
                         var y = worksheet.Cells[k + 2, 4].Value;
 
@@ -160,10 +162,10 @@ namespace WpfApp
                         var bc = worksheet.Cells[k + 2, 10].Value;
 
 
-                        if (x == null || y == null || ph1 == null || ph2 == null || ph3 == null || mad == null)
+                        if (x == null || y == null || ph1 == null || ph2 == null || ph3 == null || mad == null || phase == null)
                         {
                             fileCorruption = true;
-                            ebsd_Points[_x, _y] = new EBSD_Point(0, 0, 0, 0, 0, 0, 0);
+                            ebsd_Points[_x, _y] = new EBSD_Point(0, 0, 0, 0, 0, 0, 0, 0);
                         }
                         else
                         {
@@ -176,8 +178,9 @@ namespace WpfApp
 
                             float Mad = (float)(double)mad;
                             int Bc = Convert.ToInt32(bc);
+                            int Phase = Convert.ToInt32(phase);
 
-                            ebsd_Points[_x, _y] = new EBSD_Point(X, Y, Ph1, Ph2, Ph3, Mad, Bc);
+                            ebsd_Points[_x, _y] = new EBSD_Point(X, Y, Ph1, Ph2, Ph3, Mad, Bc, Phase);
                         }
 
                         k++;

@@ -1,6 +1,7 @@
 ﻿using Cloo;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 namespace EBSD_Analyse
@@ -461,21 +462,30 @@ namespace EBSD_Analyse
             Stack<Vector2> pixels = new Stack<Vector2>();
             pixels.Push(pt);
 
+            Dictionary<int, int> phases = new Dictionary<int, int>();
+
             while (pixels.Count > 0)
             {
                 Vector2 a = pixels.Pop();
-                if (a.X < Data.Width && a.X >= 0 &&
-                        a.Y < Data.Height && a.Y >= 0 && GrainPointsDefined[(int)a.X, (int)a.Y] == false)//make sure we stay within bounds
-                {
+                int x = (int)a.X;
+                int y = (int)a.Y;
 
-                    if (GrainMask[(int)a.X + (int)a.Y * Data.Width] == 0)
+                if (x < Data.Width && x >= 0 &&
+                        y < Data.Height && y >= 0 && GrainPointsDefined[x, y] == false)//make sure we stay within bounds
+                {
+                    int phase = Data.Ebsd_points[x, y].Phase;
+
+                    if (phases.ContainsKey(phase)) { phases[phase]++; }
+                    else { phases.Add(phase, 1); }
+
+                    if (GrainMask[x + y * Data.Width] == 0)
                     {
                         grain.Points.Add(a);
-                        GrainPointsDefined[(int)a.X, (int)a.Y] = true;
-                        pixels.Push(new Vector2(a.X - 1, a.Y));
-                        pixels.Push(new Vector2(a.X + 1, a.Y));
-                        pixels.Push(new Vector2(a.X, a.Y - 1));
-                        pixels.Push(new Vector2(a.X, a.Y + 1));
+                        GrainPointsDefined[x, y] = true;
+                        pixels.Push(new Vector2(x - 1, y));
+                        pixels.Push(new Vector2(x + 1, y));
+                        pixels.Push(new Vector2(x, y - 1));
+                        pixels.Push(new Vector2(x, y + 1));
                     }
                     else
                     {
@@ -483,6 +493,8 @@ namespace EBSD_Analyse
                     }
                 }
             }
+            grain.phase = phases.FirstOrDefault(x => x.Value == phases.Max(x => x.Value)).Key;
+
             return;
         }
 
@@ -592,10 +604,11 @@ namespace EBSD_Analyse
         public float X, Y, MAD;
         public Euler Euler;
         public int BC;
+        public int Phase;
 
-        public EBSD_Point(float x, float y, float ph1, float ph2, float ph3, float mad, int bc)
+        public EBSD_Point(float x, float y, float ph1, float ph2, float ph3, float mad, int bc, int phase)
         {
-            X = x; Y = y; Euler = new Euler(ph1, ph2, ph3); MAD = mad; BC = bc;
+            X = x; Y = y; Euler = new Euler(ph1, ph2, ph3); MAD = mad; BC = bc; Phase = phase;
         }
     }
 
@@ -625,6 +638,7 @@ namespace EBSD_Analyse
 
         public int id { get; set; }
         public float size => Points.Count + Edges.Count;
+        public int phase { get; set; }
     }
 
 
