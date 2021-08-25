@@ -2,7 +2,6 @@
 using System;
 using System.Linq;
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using EBSD_Analyse;
 using System.Drawing;
@@ -11,12 +10,13 @@ using System.ComponentModel;
 using Newtonsoft.Json;
 using System.Windows.Data;
 using System.IO;
-using System.Threading;
-using System.Windows.Media.Media3D;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using OxyPlot.Wpf;
+using OxyPlot;
+using OxyPlot.Series;
+using OxyPlot.Axes;
 
 namespace WpfApp
 {
@@ -413,6 +413,25 @@ namespace WpfApp
 
 
             GrainsInfoList.ItemsSource = analyzer.Data.Grains;
+
+            int[] phases = analyzer.Data.Grains.Select(x => x.phase).Distinct().ToArray();
+
+            List<ColumnItem> itmes = new List<ColumnItem>();
+            foreach (int phase in phases)
+            {
+                itmes.Add(new ColumnItem(analyzer.Data.Grains.Where(x => x.phase == phase).Average(x => x.size)));
+            }
+            
+            GrainSizeChart.Axes.Clear();
+
+            GrainSizeChart.Axes.Add(new OxyPlot.Wpf.CategoryAxis
+            {
+                Position = AxisPosition.Left,
+                Key="phases",
+                ItemsSource = phases
+            });
+
+            GrainSizeChart.Series[0].ItemsSource = itmes;
         }
 
 
@@ -551,35 +570,15 @@ namespace WpfApp
         #endregion Helpers
 
 
-    }
+
+        // Из интернета ----------------------------------------------------
 
 
-    // Из интернета ----------------------------------------------------
-
-    // Для Списка изображений
-    public class BinaryImageConverter : IValueConverter
-    {
-        object IValueConverter.Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            if (value != null && value is byte[])
-            {
-                byte[] ByteArray = value as byte[];
-                BitmapImage bmp = new BitmapImage();
-                bmp.BeginInit();
-                bmp.StreamSource = new MemoryStream(ByteArray);
-                bmp.EndInit();
-                return bmp;
-            }
-            return null;
-        }
-
-        object IValueConverter.ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            throw new Exception("The method or operation is not implemented.");
-        }
 
 
     }
+
+
 
 
 

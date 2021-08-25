@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp"
+        xmlns:oxy="http://oxyplot.org/wpf"
         mc:Ignorable="d"
         Title="MainWindow" Height="600" Width="1000"
         ResizeMode="CanMinimize"
@@ -401,9 +402,16 @@
                         </Grid>
                     </GroupBox>
 
-                    <GroupBox VerticalAlignment="Top" Header="Статистика" Width="350">
+                    <GroupBox VerticalAlignment="Top" Header="Статистика" Width="350" Height="160">
                         <Grid>
-                            <!--Chart (may be phase/size) (use some chart lib*)-->
+                            <oxy:Plot x:Name="GrainSizeChart" LegendTitle="Площадь, µm²"  Background="DarkGray"  PlotMargins="25,0,0,20" >
+                                <oxy:Plot.Axes>
+                                    <oxy:LinearAxis />
+                                </oxy:Plot.Axes>
+                                <oxy:Plot.Series>
+                                    <oxy:ColumnSeries />
+                                </oxy:Plot.Series>
+                            </oxy:Plot>
                         </Grid>
                     </GroupBox>
 
