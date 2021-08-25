@@ -40,8 +40,13 @@ namespace WpfApp
             using (StreamReader sr = new StreamReader(path))
             {
                 string json = sr.ReadToEnd();
-
-                history = JsonConvert.DeserializeObject<FileInfo[]>(json);
+                FileInfo[] info = null;
+                try
+                {
+                    info = JsonConvert.DeserializeObject<FileInfo[]>(json);
+                }
+                catch { MessageBox.Show("Не удалось загрузить часть недавно открытых файлов, пожалуйста перезагрузите их вручную"); }
+                history = info;
             }
             return history;
         }

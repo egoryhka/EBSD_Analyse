@@ -21,10 +21,4 @@
     <ProjectReference Include="..\EBSD_Analyse\EBSD_Analyse.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Resource Include="cubeTexture.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-  </ItemGroup>
-
 </Project>
