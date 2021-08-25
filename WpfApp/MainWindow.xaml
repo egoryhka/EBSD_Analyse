@@ -8,7 +8,8 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="600" Width="1000"
         ResizeMode="CanMinimize"
-        FontWeight="Bold">
+        FontWeight="Bold"
+        Icon="Icon.ico">
 
     <Grid>
         <WrapPanel Orientation="Vertical">
