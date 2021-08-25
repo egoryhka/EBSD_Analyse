@@ -386,6 +386,9 @@
                             <Label  Content="Пороговый угол разориентации:" Height="25" Width="205" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="9,10,0,0"/>
                             <TextBox x:Name="MissOrientationTreshold" VerticalContentAlignment="Center" Height="25" Width="120" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,10,0,0" PreviewTextInput="MissOrientationTreshold_PreviewTextInput" TextChanged="MissOrientationTreshold_TextChanged"/>
                             <Button x:Name="GrainsDefineButton" Content="Определить зёрна" Height="25" Width="120" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,45.15,0,0" Click="GrainsDefineButton_Click"/>
+                            <Button x:Name="GrainTableIdSortButton" Content="Id - Sort" Height="25" Width="80" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,100.15,0,0" Click="GrainTableIdSortButton_Click" />
+                            <Button x:Name="GrainTableSqrSortButton" Content="S - Sort" Height="25" Width="80" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,130.15,0,0" Click="GrainTableSqrSortButton_Click" />
+                            <Button x:Name="GrainTablePhaseSortButton" Content="Phase - Sort" Height="25" Width="80" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="214,160.15,0,0" Click="GrainTablePhaseSortButton_Click" />
 
                             <ListView x:Name="GrainsInfoList" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="9,45.15,0,9" BorderThickness="0" Width="200" Height="150" SelectionChanged="GrainsInfoList_SelectionChanged">
                                 <ListView.View>
@@ -404,14 +407,16 @@
 
                     <GroupBox VerticalAlignment="Top" Header="Статистика" Width="350" Height="160">
                         <Grid>
-                            <oxy:Plot x:Name="GrainSizeChart" LegendTitle="Площадь, µm²"  Background="DarkGray"  PlotMargins="25,0,0,20" >
-                                <oxy:Plot.Axes>
-                                    <oxy:LinearAxis />
-                                </oxy:Plot.Axes>
+                            <oxy:Plot x:Name="GrainSizeChart" Background="DarkGray"  PlotMargins="25,0,0,20" >
+                                <!--<oxy:Plot.Axes>
+                                    <oxy:CategoryAxis/>
+                                </oxy:Plot.Axes>-->
                                 <oxy:Plot.Series>
-                                    <oxy:ColumnSeries />
+                                    <oxy:ColumnSeries Background="LightGray" Title="Средняя площадь, µm²" LabelFormatString="'{0:F2}" />
                                 </oxy:Plot.Series>
                             </oxy:Plot>
+
+                            <Label FontWeight="Normal" Content="Phase" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,10,0"/>
                         </Grid>
                     </GroupBox>
 

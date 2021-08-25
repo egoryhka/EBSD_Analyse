@@ -405,33 +405,34 @@ namespace WpfApp
         private void GrainsDefineButton_Click(object sender, RoutedEventArgs e)
         {
             float mot;
-            if (float.TryParse(MissOrientationTreshold.Text, out mot))
-            {
-                analyzer.RecalculateGrains(mot);
-            }
-            // и т.д
+            if (!float.TryParse(MissOrientationTreshold.Text, out mot)) return;
 
+            analyzer.RecalculateGrains(mot);
+            // и т.д
 
             GrainsInfoList.ItemsSource = analyzer.Data.Grains;
 
             int[] phases = analyzer.Data.Grains.Select(x => x.phase).Distinct().ToArray();
 
-            List<ColumnItem> itmes = new List<ColumnItem>();
+            List<ColumnItem> items = new List<ColumnItem>();
             foreach (int phase in phases)
             {
-                itmes.Add(new ColumnItem(analyzer.Data.Grains.Where(x => x.phase == phase).Average(x => x.size)));
+                items.Add(new ColumnItem(analyzer.Data.Grains.Where(x => x.phase == phase).Average(x => x.size)));
             }
-            
+
+
+            var categoryAxis = new OxyPlot.Wpf.CategoryAxis { Position = AxisPosition.Bottom, AbsoluteMaximum = 10, AbsoluteMinimum = -10 };
+            categoryAxis.ItemsSource = phases;
+
+            var valueAxis = new OxyPlot.Wpf.LinearAxis { Position = AxisPosition.Left, MinimumPadding = 0, MaximumPadding = 1f, AbsoluteMinimum = 0, AbsoluteMaximum = items.Max(x => x.Value) + 500 };
+
+
             GrainSizeChart.Axes.Clear();
+            GrainSizeChart.Axes.Add(categoryAxis);
+            GrainSizeChart.Axes.Add(valueAxis);
 
-            GrainSizeChart.Axes.Add(new OxyPlot.Wpf.CategoryAxis
-            {
-                Position = AxisPosition.Left,
-                Key="phases",
-                ItemsSource = phases
-            });
+            GrainSizeChart.Series[0].ItemsSource = items;
 
-            GrainSizeChart.Series[0].ItemsSource = itmes;
         }
 
 
@@ -524,6 +525,21 @@ namespace WpfApp
                 SelectGrain((Grain)e.AddedItems[0]);
         }
 
+        private void GrainTableIdSortButton_Click(object sender, RoutedEventArgs e)
+        {
+            GrainsInfoList.ItemsSource = GrainsInfoList.ItemsSource.OfType<Grain>().OrderBy(x => x.id);
+        }
+
+        private void GrainTableSqrSortButton_Click(object sender, RoutedEventArgs e)
+        {
+            GrainsInfoList.ItemsSource = GrainsInfoList.ItemsSource.OfType<Grain>().OrderBy(x => x.size);
+        }
+
+        private void GrainTablePhaseSortButton_Click(object sender, RoutedEventArgs e)
+        {
+            GrainsInfoList.ItemsSource = GrainsInfoList.ItemsSource.OfType<Grain>().OrderBy(x => x.phase);
+        }
+
         #endregion Events
 
         // Helpers
@@ -554,16 +570,6 @@ namespace WpfApp
                 Int32Rect.Empty,
                 BitmapSizeOptions.FromEmptyOptions());
         }
-
-
-
-
-
-
-
-
-
-
 
 
 
