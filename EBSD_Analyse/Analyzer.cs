@@ -197,7 +197,24 @@ namespace EBSD_Analyse
 
              //------------------------------------------------------------
 
-                float angleBetween(float3 a, float3 b){
+
+                float3 rotateVector(float3 a, float3 eul){
+                   
+                    eul=(float3)(radians(eul.x),radians(eul.y),radians(eul.z));
+                    a = (float3)(a.x * cos(eul.x) - a.y * sin(eul.x), a.x * sin(eul.x) + a.y * cos(eul.x), a.z); // Z - rotation
+                    a = (float3)(a.x * cos(eul.y) - a.z * sin(eul.y), a.y, -a.x * sin(eul.y) + a.z * cos(eul.y)); // Y - rotation
+                    a = (float3)(a.x, a.y * cos(eul.z) - a.z * sin(eul.z), a.y * sin(eul.z) + a.z * cos(eul.z)); // X - rotation
+                        return a;
+                }
+
+                float angleBetween(float3 eul1, float3 eul2){
+                    
+                    float3 a = (float3)(1,1,1);
+                    float3 b = (float3)(1,1,1);
+
+                    a = rotateVector(a,eul1);
+                    b = rotateVector(b,eul2);
+
                     return degrees(acos(dot(a,b)/(length(a)*length(b))));
                 }
 
@@ -324,7 +341,8 @@ namespace EBSD_Analyse
 
         public byte[] ApplyGrainFilter(byte[] img, float MissOrientationThreshold)
         {
-            GrainMask = CalculateGrainMask(MissOrientationThreshold);
+            if (GrainMask == null) return img;
+            //GrainMask = CalculateGrainMask(MissOrientationThreshold);
 
             ComputeKernel kernel = null;
 
@@ -447,7 +465,7 @@ namespace EBSD_Analyse
                     if (GrainMask[id_2D] != 1 && !GrainPointsDefined[x, y])
                     {
                         Grain grain = new Grain() { Edges = new List<Vector2>(), Points = new List<Vector2>() };
-                        FloodFill(new Vector2(x, y), ref grain);
+                        FloodFill(new Vector2(x, y), ref grain, MissOrientationThreshold);
                         grain.id = grainId;
                         grainId++;
                         Data.Grains.Add(grain);
@@ -456,13 +474,18 @@ namespace EBSD_Analyse
             }
 
         }
+  
 
-        private void FloodFill(Vector2 pt, ref Grain grain)
+        private void FloodFill(Vector2 pt, ref Grain grain, float MissOrientationThreshold)
         {
             Stack<Vector2> pixels = new Stack<Vector2>();
             pixels.Push(pt);
 
             Dictionary<int, int> phases = new Dictionary<int, int>();
+
+            Euler startPointEuler = new Euler(0, 0, 0);
+
+            if (pt.X < Data.Width && pt.X >= 0 && pt.Y < Data.Height && pt.Y >= 0) startPointEuler = Data.Eulers[(int)pt.X + (int)pt.Y * Data.Width];
 
             while (pixels.Count > 0)
             {
@@ -478,7 +501,8 @@ namespace EBSD_Analyse
                     if (phases.ContainsKey(phase)) { phases[phase]++; }
                     else { phases.Add(phase, 1); }
 
-                    if (GrainMask[x + y * Data.Width] == 0)
+                    int linearId = x + y * Data.Width;
+                    if (GrainMask[linearId] == 0)
                     {
                         grain.Points.Add(a);
                         GrainPointsDefined[x, y] = true;

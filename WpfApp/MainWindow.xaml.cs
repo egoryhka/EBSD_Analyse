@@ -438,6 +438,7 @@ namespace WpfApp
 
             GrainSizeChart.Series[0].ItemsSource = items;
 
+            UpdateImage();
         }
 
 
@@ -467,8 +468,10 @@ namespace WpfApp
             UpdateImage();
         }
 
+
         private void EBSD_Image_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
+
             if (analyzer == null || analyzer.Data.Grains.Count == 0) return;
 
             System.Windows.Point pt = e.GetPosition(EBSD_Image);
